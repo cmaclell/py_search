@@ -1,1 +1,2 @@
 v0.1.0, 7/28/15 -- Initial release.
+v0.1.1, 7/28/15 -- Slight changes in names.
