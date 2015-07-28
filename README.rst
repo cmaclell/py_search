@@ -10,14 +10,14 @@ Installation
 
 You can install this software using pip::
 
-    pip install -U py-search
+    pip install -U py_search
 
 You can install the latest version of the code directly from github::
     
-    pip install -U git+https://github.com/cmaclell/py-search@master
+    pip install -U git+https://github.com/cmaclell/py_search@master
 
 Important Links
 ===============
 
-- Source code: `<https://github.com/cmaclell/py-search>`_
-- Documentation: `<http://py-search.readthedocs.org>`_
+- Source code: `<https://github.com/cmaclell/py_search>`_
+- Documentation: `<http://py_search.readthedocs.org>`_
