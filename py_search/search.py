@@ -7,7 +7,7 @@ from heapq import heappush
 from heapq import heappop
 from heapq import heapify
 
-class SearchNode(object):
+class Node(object):
     """
     A class to represent a node in the graph search. This node stores state
     information, path to the state, cost of the node, depth of the node, and
@@ -42,7 +42,7 @@ class SearchNode(object):
         return hash(self.state)
 
     def __eq__(self, other):
-        return isinstance(other, SearchNode) and self.state == other.state
+        return isinstance(other, Node) and self.state == other.state
 
     def __ne__(self, other):
         return not self.__eq__(other)

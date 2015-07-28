@@ -2,13 +2,16 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
-
 import random
 
-from py_search.search import SearchNode
+from py_search.search import Node
 from py_search.search import BeamGS
+from py_search.search import BestFGS
 
 class EightPuzzle:
+    """
+    An eight puzzle class that can be used to test. 
+    """
 
     def __init__(self):
         self.state = (0,1,2,3,4,5,6,7,8)
@@ -121,15 +124,16 @@ if __name__ == "__main__":
     #print("Solution Length = %i" % len(sol.getSolution()))
     #print()
     #
-    #print("BEST FIRST GRAPH SEARCH")
-    #sol = next(BestFGS(Node(initial), successorFn8Puzzle, goalTestFn8Puzzle,
-    #              heuristicFn8Puzzle))
-    #print("Solution Length = %i" % len(sol.getSolution()))
-    #print()
+
+    print("BEST FIRST GRAPH SEARCH")
+    sol = next(BestFGS(Node(initial), successorFn8Puzzle, goalTestFn8Puzzle,
+                  heuristicFn8Puzzle))
+    print("Solution Length = %i" % len(sol.getSolution()))
+    print()
 
     print("BEAM GRAPH SEARCH")
-    sol = next(BeamGS(SearchNode(initial), successorFn8Puzzle, goalTestFn8Puzzle,
-                  heuristicFn8Puzzle, 10))
+    sol = next(BeamGS(Node(initial), successorFn8Puzzle, goalTestFn8Puzzle,
+                  heuristicFn8Puzzle, 3))
     print("Solution Length = %i" % len(sol.getSolution()))
     print()
 
