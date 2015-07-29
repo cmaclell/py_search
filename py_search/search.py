@@ -240,7 +240,7 @@ def widening_beam_graph_search(initial, successor, goal_test, heuristic,
             found = True
             yield solution
         beam_width += 1
-        print('Increasing beam width to: %i' % beam_width)
+        #print('Increasing beam width to: %i' % beam_width)
 
 def IDDFS(initial, successorFn, goalTestFn, initialDepthLimit=1):
     """
