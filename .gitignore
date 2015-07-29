@@ -1,1 +1,12 @@
+# ignore various kinds of temp files
+*.swp
+*~
+
+# ignore compiled python files
 *.pyc
+
+# ignore specific files
+dist/
+docs/_build
+docs/_static
+docs/_templates
