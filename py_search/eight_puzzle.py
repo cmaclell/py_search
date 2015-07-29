@@ -118,7 +118,7 @@ if __name__ == "__main__":
     print("Solution Length = %i" % len(sol.getSolution()))
     print()
 
-    print("Beam Graph Search")
+    print("Widening Beam Graph Search")
     sol = next(widening_beam_graph_search(Node(initial), successorFn8Puzzle,
                                   goalTestFn8Puzzle, heuristicFn8Puzzle))
     print("Solution Length = %i" % len(sol.getSolution()))

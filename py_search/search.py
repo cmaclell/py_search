@@ -222,8 +222,7 @@ def beam_graph_search(initial, successor, goal_test, heuristic, beam_width=1):
         yield solution
 
 def widening_beam_graph_search(initial, successor, goal_test, heuristic,
-                               initial_beam_width=3,
-                               max_beam_width=float('inf')):
+                               initial_beam_width=3, max_beam_width=1000):
     beam_width = initial_beam_width
     found = False
     while not found and beam_width <= max_beam_width:
