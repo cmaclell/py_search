@@ -129,7 +129,7 @@ class PriorityQueue(Fringe):
             value += self.heuristic(node)
 
         if node in self.open_list and value < self.open_list[node]:
-            print('remove from open')
+            #print('remove from open')
             self.remove(node)
             del self.open_list[node]
 
@@ -142,10 +142,13 @@ class PriorityQueue(Fringe):
             self.push(n)
 
         if self.max_length is not None and len(self.nodes) > self.max_length:
-            nodes = []
+            new_nodes = []
+            self.open_list = {}
             for i in range(self.max_length):
-                heappush(nodes, heappop(self.nodes))
-            self.nodes = nodes
+                value, count, node = heappop(self.nodes)
+                heappush(new_nodes, (value, count, node))
+                self.open_list[node] = value
+            self.nodes = new_nodes
 
     def remove(self, node):
         self.nodes = [ele for ele in self.nodes if ele[2] != node]
@@ -170,6 +173,7 @@ def tree_search(initial, successor, goal_test, fringe):
         node = fringe.pop()
 
         if goal_test(node):
+            #print("Nodes evaluated: %i" % fringe.node_count)
             yield node
         else:
             fringe.extend(successor(node))
@@ -187,7 +191,7 @@ def graph_search(initial, successor, goal_test, fringe):
         node = fringe.pop()
 
         if goal_test(node):
-            print(fringe.node_count)
+            #print("Nodes evaluated: %i" % fringe.node_count)
             yield node
         if node not in closed:
             closed[node] = True
@@ -216,13 +220,18 @@ def a_star_graph_search(initial, successor, goal_test, heuristic):
                                 PriorityQueue(heuristic)):
         yield solution
 
-def beam_graph_search(initial, successor, goal_test, heuristic, beam_width=1):
+def beam_tree_search(initial, successor, goal_test, heuristic, beam_width=1):
+    for solution in tree_search(initial, successor, goal_test,
+                                PriorityQueue(heuristic, max_length=beam_width)):
+        yield solution
+
+def beam_graph_search(initial, successor, goal_test, heuristic, beam_width=2):
     for solution in graph_search(initial, successor, goal_test,
                                 PriorityQueue(heuristic, max_length=beam_width)):
         yield solution
 
 def widening_beam_graph_search(initial, successor, goal_test, heuristic,
-                               initial_beam_width=3, max_beam_width=1000):
+                               initial_beam_width=1, max_beam_width=1000):
     beam_width = initial_beam_width
     found = False
     while not found and beam_width <= max_beam_width:
@@ -231,6 +240,7 @@ def widening_beam_graph_search(initial, successor, goal_test, heuristic,
             found = True
             yield solution
         beam_width += 1
+        print('Increasing beam width to: %i' % beam_width)
 
 def IDDFS(initial, successorFn, goalTestFn, initialDepthLimit=1):
     """
@@ -555,7 +565,7 @@ def BestFGS(initial, successorFn, goalTestFn, heuristicFn):
 
         if goalTestFn(current):
             #print("Succeeded!")
-            #print("Nodes evaluated: %i" % nodeCount)
+            print("Nodes evaluated: %i" % nodeCount)
             yield current
 
         for s in successorFn(current):
@@ -655,7 +665,7 @@ def BeamGS(initial, successorFn, goalTestFn, heuristicFn, initialBeamWidth=1):
 
             if goalTestFn(current):
                 #print("Succeeded!")
-                #print("Nodes evaluated: %i" % nodeCount)
+                print("Nodes evaluated: %i" % nodeCount)
                 yield current
 
             for s in successorFn(current):
