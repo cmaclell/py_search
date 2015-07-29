@@ -118,8 +118,14 @@ if __name__ == "__main__":
     print("Solution Length = %i" % len(sol.getSolution()))
     print()
 
-    print("Widening Beam Graph Search")
-    sol = next(widening_beam_graph_search(Node(initial), successorFn8Puzzle,
+    print("A* Tree Search")
+    sol = next(a_star_tree_search(Node(initial), successorFn8Puzzle,
                                   goalTestFn8Puzzle, heuristicFn8Puzzle))
     print("Solution Length = %i" % len(sol.getSolution()))
     print()
+
+    #print("Widening Beam Graph Search")
+    #sol = next(widening_beam_graph_search(Node(initial), successorFn8Puzzle,
+    #                              goalTestFn8Puzzle, heuristicFn8Puzzle))
+    #print("Solution Length = %i" % len(sol.getSolution()))
+    #print()
