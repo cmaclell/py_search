@@ -107,7 +107,7 @@ class EightPuzzleProblem(Problem):
     a more greedy variant when used with Beam Search.
     """
 
-    def heuristic(self, state):
+    def misplaced_tile_heuristic(self, state):
         """
         The misplaced tiles heuristic.
         """
@@ -118,6 +118,12 @@ class EightPuzzleProblem(Problem):
                 h += 1
         return h
 
+    def node_value(self, node):
+        """
+        The function used to compute the value of a node.
+        """
+        return node.cost() + self.misplaced_tile_heuristic(node.state)
+
     def successor(self, node):
         """
         Computes successors and computes the value of the node as cost +
@@ -126,10 +132,8 @@ class EightPuzzleProblem(Problem):
         for action in node.state.legalActions():
             new_state = node.state.copy()
             new_state.executeAction(action)
-            cost = node.cost + 1
-            h = self.heuristic(new_state)
-            yield Node(new_state, node, action, cost, 
-                       cost + h, node.depth+1)
+            path_cost = node.cost() + 1
+            yield Node(new_state, node, action, path_cost)
 
     def goal_test(self, node):
         """
@@ -144,13 +148,14 @@ class NoHeuristic(EightPuzzleProblem):
     yields something equivelent to dijkstra's algorithm when used with best
     first search and a more greedy variant when used with Beam Search.
     """
-    def heuristic(self, node):
-        return 0
+
+    def node_value(self, node):
+        return node.cost()
 
 if __name__ == "__main__":
 
     puzzle = EightPuzzle()
-    puzzle.randomize(30)
+    puzzle.randomize(20)
 
     initial = puzzle
     print("Puzzle being solved:")

@@ -11,9 +11,10 @@ from __future__ import division
 from collections import deque
 from heapq import heappush
 from heapq import heappop
-from heapq import heapify
+#from heapq import heapify
 from tabulate import tabulate
 import uuid
+import bisect
 
 class Problem(object):
     """
@@ -21,6 +22,13 @@ class Problem(object):
     """
     def __init__(self, initial, extra=None):
         self.initial = Node(initial, extra=extra)
+
+    def node_value(self, node):
+        """
+        The value of the node that is minimized by the search. By default the
+        path_cost is used, but a heuristic could be added here.
+        """
+        return node.cost()
 
     def successor(self, node):
         raise NotImplemented("No successor function implemented")
@@ -38,6 +46,15 @@ class AnnotatedProblem(Problem):
         self.initial = problem.initial
         self.nodes_expanded = 0
         self.goal_tests = 0
+        self.nodes_evaluated = 0
+
+    def node_value(self, node):
+        """
+        A wraper for the node value method that keeps track of the number of
+        times a node value was calculated.
+        """
+        self.nodes_evaluated += 1
+        return self.problem.node_value(node)
 
     def successor(self, node):
         """
@@ -76,16 +93,41 @@ class Node(object):
     :type extra: object
     """
     
-    def __init__(self, state, parent=None, action=None, cost=0, value=0,
-                 depth=0, extra=None):
+    def __init__(self, state, parent=None, action=None, path_cost=0,
+                 extra=None):
         self.state = state
         self.parent = parent
         self.action = action
-        self.depth = depth
-        self.cost = cost
-        self.value = value
+        self.path_cost = path_cost
         self.extra = extra
         self.uuid = uuid.uuid4()
+
+    def depth(self):
+        """
+        Returns the depth of the current node. Uses a loop to compute depth
+        (recursive calls are weird in python).
+        """
+        curr = self
+        depth = 0
+        while curr.parent is not None:
+            curr = curr.parent
+            depth += 1
+        return depth
+
+    def cost(self):
+        """
+        Returns the cost of the current node. 
+        """
+        return self.path_cost
+
+    def update_path(self, other):
+        """
+        Update the path the the current node with another nodes path.
+        Specificially, this updates the parent, action, and action_cost.
+        """
+        self.parent = other.parent
+        self.action = other.action
+        self.path_cost = other.path_cost
 
     def path(self):
         """
@@ -115,11 +157,7 @@ class Node(object):
         return not self.__eq__(other)
 
     def __lt__(self, other):
-        """
-        Used for sorting.
-        """
-        return (self.value, self.uuid) < (other.value, other.uuid)
-
+        return self.uuid < other.uuid
 
 class Fringe(object):
     """
@@ -191,19 +229,15 @@ class LIFOQueue(FIFOQueue):
     def pop(self):
         return self.nodes.pop()
 
-class PrioritySet(Fringe):
+class PriorityQueue(Fringe):
     """
-    A priority set that sorts elements by their value. Sorts items lowest to
+    A priority queue that sorts elements by their value. Sorts items lowest to
     hightest (i.e., always returns lowest value item).  
-    
-    This is similiar to Priority Queue, but does not allow duplicates
-    (according to hash value). If a duplicate is pushed, then the lowest value
-    one is kept.
 
-    >>> pq = PrioritySet()
-    >>> n1 = Node(1, value=1)
-    >>> n3 = Node(3, value=3)
-    >>> n7 = Node(7, value=7)
+    >>> pq = PriorityQueue()
+    >>> n1 = Node(1, path_cost=1)
+    >>> n3 = Node(3, path_cost=3)
+    >>> n7 = Node(7, path_cost=7)
 
     >>> pq.push(n7)
     >>> pq.push(n1)
@@ -211,7 +245,7 @@ class PrioritySet(Fringe):
     >>> pq.push(n7)
 
     >>> print(len(pq))
-    3
+    4
     >>> print(pq.pop().state)
     1
     >>> print(pq.pop().state)
@@ -220,24 +254,16 @@ class PrioritySet(Fringe):
     7
     """
 
-    def __init__(self, cost_limit=None, max_length=None):
+    def __init__(self, node_value, cost_limit=None, max_length=None):
         self.nodes = []
-        self.open_list = {}
-        self.node_count = 0
         self.max_length = max_length
         self.cost_limit = cost_limit
+        self.node_value = node_value
 
     def push(self, node):
-        if self.cost_limit is not None and node.value > self.cost_limit:
+        if self.cost_limit is not None and self.node_value(node) > self.cost_limit:
             return
-
-        if node in self.open_list and node.value < self.open_list[node]:
-            self.remove(node)
-
-        if node not in self.open_list:
-            self.node_count += 1
-            heappush(self.nodes, node)
-            self.open_list[node] = node.value
+        heappush(self.nodes, (self.node_value(node), node))
 
     def extend(self, nodes):
         for n in nodes:
@@ -245,22 +271,13 @@ class PrioritySet(Fringe):
 
         if self.max_length is not None and len(self.nodes) > self.max_length:
             new_nodes = []
-            new_open_list = {}
             for i in range(self.max_length):
-                node = heappop(self.nodes)
-                heappush(new_nodes, node)
-                new_open_list[node] = node.value
+                val, node = heappop(self.nodes)
+                heappush(new_nodes, (val, node))
             self.nodes = new_nodes
-            self.open_list = new_open_list
-
-    def remove(self, node):
-        self.nodes = [ele for ele in self.nodes if ele != node]
-        del self.open_list[node]
-        heapify(self.nodes)
 
     def pop(self):
-        node = heappop(self.nodes)
-        del self.open_list[node]
+        val, node = heappop(self.nodes)
         return node
 
     def __len__(self):
@@ -297,12 +314,11 @@ def graph_search(problem, fringe):
 
     while len(fringe) > 0:
         node = fringe.pop()
-
         if problem.goal_test(node):
             yield node
 
-        if node not in closed or node.value < closed[node]:
-            closed[node] = node.value
+        if node not in closed:
+            closed[node] = True
             fringe.extend(problem.successor(node))
 
 def depth_first_search(problem, search=graph_search):
@@ -314,7 +330,8 @@ def breadth_first_search(problem, search=graph_search):
         yield solution
 
 def best_first_search(problem, search=graph_search, cost_limit=float('inf')):
-    for solution in search(problem, PrioritySet(cost_limit=cost_limit)):
+    for solution in search(problem, PriorityQueue(node_value=problem.node_value,
+                                                  cost_limit=cost_limit)):
         yield solution
 
 def iterative_deepening_best_first_search(problem, search=graph_search,
@@ -330,7 +347,8 @@ def iterative_deepening_best_first_search(problem, search=graph_search,
     """
     cost_limit = initial_cost_limit
     while cost_limit < max_cost_limit:
-        for solution in search(problem, PrioritySet(cost_limit=cost_limit)):
+        for solution in search(problem, PriorityQueue(cost_limit=cost_limit,
+                                                      node_value=problem.node_value)):
             yield solution
         cost_limit += cost_inc
 
@@ -342,7 +360,8 @@ def beam_search(problem, search=graph_search, beam_width=1):
     increased the search becomes less and less greedy. If beam_width is set to
     float('inf') then this is equivelent to best_first_search.
     """
-    for solution in search(problem, PrioritySet(max_length=beam_width)):
+    for solution in search(problem, PriorityQueue(node_value=problem.node_value,
+                                                  max_length=beam_width)):
         yield solution
 
 def widening_beam_search(problem, search=graph_search, initial_beam_width=1,
@@ -355,9 +374,11 @@ def widening_beam_search(problem, search=graph_search, initial_beam_width=1,
     """
     beam_width = initial_beam_width
     while beam_width <= max_beam_width:
-        for solution in search(problem, PrioritySet(max_length=beam_width)):
+        for solution in search(problem, PriorityQueue(node_value=problem.node_value,
+                                                      max_length=beam_width)):
             yield solution
         beam_width += 1
+        print("Widening beam width to: %i" % beam_width)
 
 def compare_searches(problems, searches):
     """
@@ -377,12 +398,12 @@ def compare_searches(problems, searches):
 
             value = "Failed"
             if sol:
-                value = sol.value
+                value = sol.cost()
 
             table.append([problem.__class__.__name__, search.__name__,
                           annotated_problem.goal_tests,
-                          annotated_problem.nodes_expanded, value])
+                          annotated_problem.nodes_evaluated, value])
 
     print(tabulate(table, headers=['Problem', 'Search Alg', 'Goal Tests',
-                                   'Nodes Expanded', 'Solution Value'],
+                                   'Nodes Evaluated', 'Solution Value'],
                    tablefmt="fancy_grid"))
