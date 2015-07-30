@@ -40,11 +40,19 @@ class AnnotatedProblem(Problem):
         self.goal_tests = 0
 
     def successor(self, node):
+        """
+        A wrapper for the successor method that keeps track of the number of
+        nodes expanded.
+        """
         for s in self.problem.successor(node):
             self.nodes_expanded += 1
             yield s
 
     def goal_test(self, node):
+        """
+        A wrapper for the goal_test method that keeps track of the number of
+        goal_tests performed.
+        """
         self.goal_tests += 1
         return self.problem.goal_test(node)
 
@@ -64,8 +72,7 @@ class Node(object):
     :type cost: float
     :param depth: the distance of the current node from the initial node
     :type depth: int
-    :param extra: extra information to store in this node, typically used to
-    store non-hashable information about the state.
+    :param extra: extra information to store in this node, typically used to store non-hashable information about the state.
     :type extra: object
     """
     
@@ -109,7 +116,7 @@ class Node(object):
 
     def __lt__(self, other):
         """
-        Used for sorting
+        Used for sorting.
         """
         return (self.value, self.uuid) < (other.value, other.uuid)
 
@@ -136,6 +143,17 @@ class Fringe(object):
 class FIFOQueue(Fringe):
     """
     A first-in-first-out queue. Used to get breadth first search behavior.
+
+    >>> fifo = FIFOQueue()
+    >>> fifo.push(1)
+    >>> fifo.push(2)
+    >>> fifo.push(3)
+    >>> print(fifo.pop())
+    1
+    >>> print(fifo.pop())
+    2
+    >>> print(fifo.pop())
+    3
     """
 
     def __init__(self):
@@ -157,6 +175,17 @@ class FIFOQueue(Fringe):
 class LIFOQueue(FIFOQueue):
     """
     A last-in-first-out queue. Used to get depth first search behavior.
+
+    >>> lifo = LIFOQueue()
+    >>> lifo.push(1)
+    >>> lifo.push(2)
+    >>> lifo.push(3)
+    >>> print(lifo.pop())
+    3
+    >>> print(lifo.pop())
+    2
+    >>> print(lifo.pop())
+    1
     """
 
     def pop(self):
@@ -164,7 +193,31 @@ class LIFOQueue(FIFOQueue):
 
 class PrioritySet(Fringe):
     """
-    A priority set that sorts elements by their value.
+    A priority set that sorts elements by their value. Sorts items lowest to
+    hightest (i.e., always returns lowest value item).  
+    
+    This is similiar to Priority Queue, but does not allow duplicates
+    (according to hash value). If a duplicate is pushed, then the lowest value
+    one is kept.
+
+    >>> pq = PrioritySet()
+    >>> n1 = Node(1, value=1)
+    >>> n3 = Node(3, value=3)
+    >>> n7 = Node(7, value=7)
+
+    >>> pq.push(n7)
+    >>> pq.push(n1)
+    >>> pq.push(n3)
+    >>> pq.push(n7)
+
+    >>> print(len(pq))
+    3
+    >>> print(pq.pop().state)
+    1
+    >>> print(pq.pop().state)
+    3
+    >>> print(pq.pop().state)
+    7
     """
 
     def __init__(self, cost_limit=None, max_length=None):
@@ -215,9 +268,11 @@ class PrioritySet(Fringe):
 
 def tree_search(problem, fringe):
     """
-    Perform tree search using the given fringe class.
+    Perform tree search (i.e., search where states might be duplicated) using
+    the given fringe class.
 
-    Returns an iterators so alternative solutions can be found.
+    Returns an iterators to the solutions, so more than one solution can be
+    found.
     """
     fringe.push(problem.initial)
 
@@ -231,9 +286,11 @@ def tree_search(problem, fringe):
 
 def graph_search(problem, fringe):
     """
-    Perform graph search using the given fringe class.
+    Perform graph search (i.e., no duplicate states) using the given fringe
+    class.
 
-    Returns an iterators so alternative solutions can be found.
+    Returns an iterators to the solutions, so more than one solution can be
+    found.
     """
     closed = {}
     fringe.push(problem.initial)
@@ -263,28 +320,54 @@ def best_first_search(problem, search=graph_search, cost_limit=float('inf')):
 def iterative_deepening_best_first_search(problem, search=graph_search,
                                           initial_cost_limit=0, cost_inc=1,
                                           max_cost_limit=float('inf')): 
-
+    """
+    A variant of iterative deepening that uses cost to determine the limit for
+    expansion. If the cost of each action has a uniform cost of 1 and there is
+    no heuristic than this will give reduce to an increasing depth limited
+    search. However, in situations where actions have varying costs and
+    heuristic information is provide this might yield more complicated
+    behavior.
+    """
     cost_limit = initial_cost_limit
     while cost_limit < max_cost_limit:
         for solution in search(problem, PrioritySet(cost_limit=cost_limit)):
             yield solution
         cost_limit += cost_inc
-        print("%s - increasing cost_limit to: %i" % (__name__, cost_limit))
 
 def beam_search(problem, search=graph_search, beam_width=1):
+    """
+    Similar to best first search, but only maintains a limited number of nodes
+    in the fringe (set by beam_width). If you have a beam_width of 1, then this
+    is basically greedy hill climbing search. However, as beam width is
+    increased the search becomes less and less greedy. If beam_width is set to
+    float('inf') then this is equivelent to best_first_search.
+    """
     for solution in search(problem, PrioritySet(max_length=beam_width)):
         yield solution
 
 def widening_beam_search(problem, search=graph_search, initial_beam_width=1,
                          max_beam_width=1000):
+    """
+    A variant of beam search that successively increases the beam width. This
+    is similar to iterative deepening search in that it adapts to the
+    complexity of the task. It basically provides a greedy search that on
+    failure becomes less greedy until it can find a solution.
+    """
     beam_width = initial_beam_width
     while beam_width <= max_beam_width:
         for solution in search(problem, PrioritySet(max_length=beam_width)):
             yield solution
         beam_width += 1
-        print("%s - widening beam width to: %i" % (__name__, beam_width))
 
 def compare_searches(problems, searches):
+    """
+    A function for comparing different search algorithms on different problems.
+
+    :param problems: problems to solve.
+    :type problems: typically a list of problems, but could be an iterator
+    :param searches: search algorithms to use.
+    :type searches: typically a list of search functions, but could be an iterator
+    """
     table = []
 
     for problem in problems:
