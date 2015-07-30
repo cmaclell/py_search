@@ -78,31 +78,47 @@ class EightPuzzle:
         if zeroIndex in set([3,4,5,6,7,8]):
             yield "down"
 
-def successorFn8Puzzle(node):
-    for action in node.state.legalActions():
-        newState = node.state.copy()
-        newState.executeAction(action)
-        yield Node(newState, node, action, node.cost+1, node.depth+1)
+class EightPuzzleProblem(Problem):
 
-def heuristicFn8Puzzle(node):
-    """
-    Currently the misplaced tile count
-    """
-    goal = EightPuzzle()
-    h = 0
-    for i,v in enumerate(node.state.state):
-        if node.state.state[i] != goal.state[i]:
-            h += 1
-    return h
+    def heuristic(self, state):
+        """
+        The misplaced tiles heuristic.
+        """
+        goal = EightPuzzle()
+        h = 0
+        for i,v in enumerate(state.state):
+            if state.state[i] != goal.state[i]:
+                h += 1
+        return h
 
-def goalTestFn8Puzzle(node):
-    goal = EightPuzzle()
-    return node.state == goal
+    def successor(self, node):
+        """
+        Computes successors and computes the value of the node as cost +
+        heuristic, which yields A* search when using best first search.
+        """
+        for action in node.state.legalActions():
+            new_state = node.state.copy()
+            new_state.executeAction(action)
+            cost = node.cost + 1
+            h = self.heuristic(new_state)
+            yield Node(new_state, node, action, cost, 
+                       cost + h, node.depth+1)
+
+    def goal_test(self, node):
+        """
+        Check if the goal state has been reached.
+        """
+        goal = EightPuzzle()
+        return node.state == goal
+
+class NoHeuristic(EightPuzzleProblem):
+    def heuristic(self, node):
+        return 0
 
 if __name__ == "__main__":
 
     puzzle = EightPuzzle()
-    puzzle.randomize(15)
+    puzzle.randomize(30)
     #puzzle.executeAction('left')
     #puzzle.executeAction('up')
     #puzzle.executeAction('up')
@@ -112,20 +128,7 @@ if __name__ == "__main__":
     print(puzzle)
     print()
 
-    print("A* Graph Search")
-    sol = next(a_star_graph_search(Node(initial), successorFn8Puzzle,
-                                  goalTestFn8Puzzle, heuristicFn8Puzzle))
-    print("Solution Length = %i" % len(sol.getSolution()))
-    print()
-
-    print("BeamGS Search")
-    sol = next(BeamGS(Node(initial), successorFn8Puzzle,
-                                  goalTestFn8Puzzle, heuristicFn8Puzzle))
-    print("Solution Length = %i" % len(sol.getSolution()))
-    print()
-
-    print("Widening Beam Graph Search")
-    sol = next(widening_beam_graph_search(Node(initial), successorFn8Puzzle,
-                                  goalTestFn8Puzzle, heuristicFn8Puzzle))
-    print("Solution Length = %i" % len(sol.getSolution()))
-    print()
+    compare_searches(problems=[EightPuzzleProblem(initial)],
+                     searches=[best_first_search,
+                               iterative_deepening_best_first_search,
+                               widening_beam_search])

@@ -12,6 +12,41 @@ from collections import deque
 from heapq import heappush
 from heapq import heappop
 from heapq import heapify
+from tabulate import tabulate
+import uuid
+
+class Problem(object):
+    """
+    A problem to solve.
+    """
+    def __init__(self, initial, extra=None):
+        self.initial = Node(initial, extra=extra)
+
+    def successor(self, node):
+        raise NotImplemented("No successor function implemented")
+
+    def goal_test(self, node):
+        raise NotImplemented("No goal test function implemented")
+
+class AnnotatedProblem(Problem):
+    """
+    A Problem class that wraps around another Problem and keeps stats on nodes
+    expanded and goal tests performed.
+    """
+    def __init__(self, problem):
+        self.problem = problem
+        self.initial = problem.initial
+        self.nodes_expanded = 0
+        self.goal_tests = 0
+
+    def successor(self, node):
+        for s in self.problem.successor(node):
+            self.nodes_expanded += 1
+            yield s
+
+    def goal_test(self, node):
+        self.goal_tests += 1
+        return self.problem.goal_test(node)
 
 class Node(object):
     """
@@ -34,19 +69,20 @@ class Node(object):
     :type extra: object
     """
     
-    def __init__(self, state, parent=None, action=None, cost=0, depth=0,
-                 extra=None):
+    def __init__(self, state, parent=None, action=None, cost=0, value=0,
+                 depth=0, extra=None):
         self.state = state
         self.parent = parent
         self.action = action
         self.depth = depth
         self.cost = cost
+        self.value = value
         self.extra = extra
+        self.uuid = uuid.uuid4()
 
-    def getSolution(self):
+    def path(self):
         """
-        Returns a list of actions necessary to reach the current node from the
-        initial node.
+        Returns a path (tuple of actions) from the initial to current node.
         """
         actions = []
         current = self
@@ -54,7 +90,7 @@ class Node(object):
             actions.append(current.action)
             current = current.parent
         actions.reverse()
-        return actions
+        return tuple(actions)
 
     def __str__(self):
         return str(self.state) + str(self.extra)
@@ -71,7 +107,18 @@ class Node(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __lt__(self, other):
+        """
+        Used for sorting
+        """
+        return (self.value, self.uuid) < (other.value, other.uuid)
+
+
 class Fringe(object):
+    """
+    A template for a fringe class. Used to control the strategy of different
+    search approaches.
+    """
 
     def push(self, node):
         raise NotImplemented("No push method")
@@ -87,6 +134,9 @@ class Fringe(object):
         raise NotImplemented("No len method")
 
 class FIFOQueue(Fringe):
+    """
+    A first-in-first-out queue. Used to get breadth first search behavior.
+    """
 
     def __init__(self):
         self.nodes = deque()
@@ -105,37 +155,36 @@ class FIFOQueue(Fringe):
         return len(self.nodes)
 
 class LIFOQueue(FIFOQueue):
+    """
+    A last-in-first-out queue. Used to get depth first search behavior.
+    """
 
     def pop(self):
         return self.nodes.pop()
 
-class PriorityQueue(Fringe):
+class PrioritySet(Fringe):
+    """
+    A priority set that sorts elements by their value.
+    """
 
-    def __init__(self, heuristic=None, cost_limit=None, max_length=None):
+    def __init__(self, cost_limit=None, max_length=None):
         self.nodes = []
         self.open_list = {}
         self.node_count = 0
-        self.heuristic = heuristic
         self.max_length = max_length
         self.cost_limit = cost_limit
 
     def push(self, node):
-        value = node.cost
-
-        if self.cost_limit is not None and value > self.cost_limit:
+        if self.cost_limit is not None and node.value > self.cost_limit:
             return
 
-        if self.heuristic:
-            value += self.heuristic(node)
-
-        if node in self.open_list and value < self.open_list[node]:
-            #print('remove from open')
+        if node in self.open_list and node.value < self.open_list[node]:
             self.remove(node)
-            del self.open_list[node]
 
         if node not in self.open_list:
             self.node_count += 1
-            heappush(self.nodes,(value, self.node_count, node))
+            heappush(self.nodes, node)
+            self.open_list[node] = node.value
 
     def extend(self, nodes):
         for n in nodes:
@@ -143,563 +192,114 @@ class PriorityQueue(Fringe):
 
         if self.max_length is not None and len(self.nodes) > self.max_length:
             new_nodes = []
-            self.open_list = {}
+            new_open_list = {}
             for i in range(self.max_length):
-                value, count, node = heappop(self.nodes)
-                heappush(new_nodes, (value, count, node))
-                self.open_list[node] = value
+                node = heappop(self.nodes)
+                heappush(new_nodes, node)
+                new_open_list[node] = node.value
             self.nodes = new_nodes
+            self.open_list = new_open_list
 
     def remove(self, node):
-        self.nodes = [ele for ele in self.nodes if ele[2] != node]
+        self.nodes = [ele for ele in self.nodes if ele != node]
+        del self.open_list[node]
         heapify(self.nodes)
 
     def pop(self):
-        value, count, node = heappop(self.nodes)
+        node = heappop(self.nodes)
+        del self.open_list[node]
         return node
 
     def __len__(self):
         return len(self.nodes)
 
-def tree_search(initial, successor, goal_test, fringe):
+def tree_search(problem, fringe):
     """
     Perform tree search using the given fringe class.
 
     Returns an iterators so alternative solutions can be found.
     """
-    fringe.push(initial)
+    fringe.push(problem.initial)
 
     while len(fringe) > 0:
         node = fringe.pop()
 
-        if goal_test(node):
-            #print("Nodes evaluated: %i" % fringe.node_count)
+        if problem.goal_test(node):
             yield node
         else:
-            fringe.extend(successor(node))
+            fringe.extend(problem.successor(node))
 
-def graph_search(initial, successor, goal_test, fringe):
+def graph_search(problem, fringe):
     """
     Perform graph search using the given fringe class.
 
     Returns an iterators so alternative solutions can be found.
     """
     closed = {}
-    fringe.push(initial)
+    fringe.push(problem.initial)
 
     while len(fringe) > 0:
         node = fringe.pop()
 
-        if goal_test(node):
-            #print("Nodes evaluated: %i" % fringe.node_count)
+        if problem.goal_test(node):
             yield node
-        if node not in closed:
-            closed[node] = True
-            fringe.extend(successor(node))
 
-def depth_first_tree_search(initial, successor, goal_test):
-    for solution in tree_search(initial, successor, goal_test, LIFOQueue()):
+        if node not in closed or node.value < closed[node]:
+            closed[node] = node.value
+            fringe.extend(problem.successor(node))
+
+def depth_first_search(problem, search=graph_search):
+    for solution in search(problem, LIFOQueue()):
         yield solution
 
-def breadth_first_tree_search(initial, successor, goal_test):
-    for solution in tree_search(initial, successor, goal_test, FIFOQueue()):
+def breadth_first_search(problem, search=graph_search):
+    for solution in search(problem, FIFOQueue()):
         yield solution
 
-def dijkstra_tree_search(initial, successor, goal_test):
-    for solution in tree_search(initial, successor, goal_test,
-                                PriorityQueue()):
+def best_first_search(problem, search=graph_search, cost_limit=float('inf')):
+    for solution in search(problem, PrioritySet(cost_limit=cost_limit)):
         yield solution
 
-def a_star_tree_search(initial, successor, goal_test, heuristic):
-    for solution in tree_search(initial, successor, goal_test,
-                                PriorityQueue(heuristic)):
+def iterative_deepening_best_first_search(problem, search=graph_search,
+                                          initial_cost_limit=0, cost_inc=1,
+                                          max_cost_limit=float('inf')): 
+
+    cost_limit = initial_cost_limit
+    while cost_limit < max_cost_limit:
+        for solution in search(problem, PrioritySet(cost_limit=cost_limit)):
+            yield solution
+        cost_limit += cost_inc
+        print("%s - increasing cost_limit to: %i" % (__name__, cost_limit))
+
+def beam_search(problem, search=graph_search, beam_width=1):
+    for solution in search(problem, PrioritySet(max_length=beam_width)):
         yield solution
 
-def a_star_graph_search(initial, successor, goal_test, heuristic):
-    for solution in graph_search(initial, successor, goal_test,
-                                PriorityQueue(heuristic)):
-        yield solution
-
-def beam_tree_search(initial, successor, goal_test, heuristic, beam_width=1):
-    for solution in tree_search(initial, successor, goal_test,
-                                PriorityQueue(heuristic, max_length=beam_width)):
-        yield solution
-
-def beam_graph_search(initial, successor, goal_test, heuristic, beam_width=2):
-    for solution in graph_search(initial, successor, goal_test,
-                                PriorityQueue(heuristic, max_length=beam_width)):
-        yield solution
-
-def widening_beam_graph_search(initial, successor, goal_test, heuristic,
-                               initial_beam_width=1, max_beam_width=1000):
+def widening_beam_search(problem, search=graph_search, initial_beam_width=1,
+                         max_beam_width=1000):
     beam_width = initial_beam_width
-    found = False
-    while not found and beam_width <= max_beam_width:
-        for solution in graph_search(initial, successor, goal_test,
-                                    PriorityQueue(heuristic, max_length=beam_width)):
-            found = True
+    while beam_width <= max_beam_width:
+        for solution in search(problem, PrioritySet(max_length=beam_width)):
             yield solution
         beam_width += 1
-        #print('Increasing beam width to: %i' % beam_width)
-
-def IDDFS(initial, successorFn, goalTestFn, initialDepthLimit=1):
-    """
-    Depth Limited Depth First Search
-    """
-    depthLimit = initialDepthLimit
-    maxDepth = False
-    nodeCount = 0
-    successorFn = successorFn
-    goalTestFn = goalTestFn
-
-    while not maxDepth:
-        maxDepth = True
-        fringe = deque()
-        getNext = fringe.pop
-        fringe.append(initial)
-
-        while fringe:
-            current = getNext()
-            nodeCount += 1
-            if goalTestFn(current):
-                print("Succeeded!")
-                print("Nodes evaluated: %i" % nodeCount)
-                yield current
-
-            if current.depth < depthLimit:
-                fringe.extend(successorFn(current))
-            else:
-                maxDepth = False
-        depthLimit += 1
-        print("Increasing depth limit to: %i" % depthLimit)
-
-    print("Failed")
-    print("Nodes evaluated: %i" % nodeCount)
-
-def DLDFS(initial, successorFn, goalTestFn, depthLimit=float('inf')):
-    """
-    Depth Limited Depth First Search
-    """
-    fringe = deque()
-    getNext = fringe.pop
-    nodeCount = 0
-    fringe.append(initial)
-    successorFn = successorFn
-    goalTestFn = goalTestFn
-
-    while fringe:
-        current = getNext()
-
-        nodeCount += 1
-        if goalTestFn(current):
-            print("Succeeded!")
-            print("Nodes evaluated: %i" % nodeCount)
-            yield current
-
-        if current.depth < depthLimit:
-            fringe.extend(successorFn(current))
-
-    print("Failed")
-    print("Nodes evaluated: %i" % nodeCount)
-
-def DepthFS(initial, successorFn, goalTestFn):
-    """
-    Depth first search
-    """
-    fringe = deque()
-    getNext = fringe.pop
-    nodeCount = 0
-    fringe.append(initial)
-    successorFn = successorFn
-    goalTestFn = goalTestFn
-
-    while fringe:
-        current = getNext()
-
-        nodeCount += 1
-        if goalTestFn(current):
-            print("Succeeded!")
-            print("Nodes evaluated: %i" % nodeCount)
-            yield current
-
-        fringe.extend(successorFn(current))
-
-    print("Failed")
-    print("Nodes evaluated: %i" % nodeCount)
-
-def DepthFGS(initial, successorFn, goalTestFn):
-    """
-    Depth first grid search (removes duplicates)
-    """
-    nodeCount = 0
-    fringe = deque()
-    closedList = set()
-    openList = set()
-
-    fringe.append(initial)
-    openList.add(initial)
-
-    while fringe:
-        current = fringe.pop()
-        openList.remove(current)
-        closedList.add(current)
-
-        if goalTestFn(current):
-            #print("Succeeded!")
-            #print("Nodes evaluated: %i" % nodeCount)
-            yield current
-
-        # Trick to push the looping into C execution
-        added = [fringe.append(s) or openList.add(s) for s in
-                 successorFn(current) if s not in closedList and s not in
-                 openList]
-        nodeCount += len(added)
-        #for s in successorFn(current):
-        #    nodeCount += 1
-        #    if s not in closedList and s not in openList:
-        #        fringe.append(s)
-        #        openList.add(s)
-
-    #print("Failed")
-    #print("Nodes evaluated: %i" % nodeCount)
-
-def BreadthFS(initial, successorFn, goalTestFn):
-    """
-    Breadth First search
-    """
-    nodeCount = 1
-    fringe = deque()
-    fringe.append(initial)
-
-    while fringe:
-        current = fringe.popleft()
-
-        nodeCount += 1
-        if goalTestFn(current):
-            print("Succeeded!")
-            print("Nodes evaluated: %i" % nodeCount)
-            yield current
-
-        for s in successorFn(current):
-            nodeCount += 1
-            fringe.append(s)
-
-    print("Failed")
-    print("Nodes evaluated: %i" % nodeCount)
-
-def BreadthFGS(initial, successorFn, goalTestFn):
-    """
-    Breadth First Graph Search
-    """
-    nodeCount = 1
-    fringe = deque()
-    closedList = set()
-    openList = set()
-    fringe.append(initial)
-    openList.add(initial)
-
-    while fringe:
-        current = fringe.popleft()
-        openList.remove(current)
-        closedList.add(current)
-
-        if goalTestFn(current):
-            #print("Succeeded!")
-            #print("Nodes evaluated: %i" % nodeCount)
-            yield current
-
-        added = [fringe.append(s) or openList.add(s) for s in
-                 successorFn(current) if s not in closedList and s not in
-                 openList]
-        nodeCount += len(added)
-        #for s in successorFn(current):
-        #    nodeCount += 1
-        #    if s not in closedList and s not in openList:
-        #        fringe.append(s)
-        #        openList.add(s)
-
-    #print("Failed")
-    #print("Nodes evaluated: %i" % nodeCount)
-
-def IDBFS(initial, successorFn, goalTestFn, heuristicFn,
-          initialCostLimit=1, costInc=1):
-    """
-    Cost limited Best first search
-    """
-    nodeCount = 1
-    successorFn = successorFn
-    heuristicFn = heuristicFn
-    goalTestFn = goalTestFn
-
-    costMax = False
-    costLimit = initialCostLimit
-
-    while not costMax:
-        costMax = True
-        fringe = []
-        openList = {}
-        heappush(fringe, (0, nodeCount, initial))
-        openList[initial] = 0
-
-        while fringe:
-            cost, counter, current = heappop(fringe)
-            del openList[current]
-
-            if goalTestFn(current):
-                print("Succeeded!")
-                print("Nodes evaluated: %i" % nodeCount)
-                yield current
-
-            for s in successorFn(current):
-                nodeCount += 1
-                sCost = s.cost + heuristicFn(s)
-                if sCost <= costLimit:
-                    if s in openList:
-                        if sCost < openList[s]:
-                            #fringe.remove((openList[s], s))
-                            fringe = [e for e in fringe if e[2] != s]
-                            heapify(fringe)
-                            openList[s] = sCost
-                            heappush(fringe, (sCost, nodeCount, s))
-                    else:
-                        openList[s] = sCost
-                        heappush(fringe, (sCost, nodeCount, s))
-                else:
-                    costMax = False
-        costLimit += costInc
-        #print("Increasing cost limit to: %i" % costLimit)
-
-    print("Failed")
-    print("Nodes evaluated: %i" % nodeCount)
-
-def CLBFS(initial, successorFn, goalTestFn, heuristicFn,
-          costLimit=float('inf')):
-    """
-    Cost limited Best first search
-    """
-    nodeCount = 1
-
-    fringe = []
-    openList = {}
-    heappush(fringe, (0, nodeCount, initial))
-    openList[initial] = 0
-
-    while fringe:
-        cost, counter, current = heappop(fringe)
-        del openList[current]
-
-        if goalTestFn(current):
-            print("Succeeded!")
-            print("Nodes evaluated: %i" % nodeCount)
-            yield current
-
-        for s in successorFn(current):
-            nodeCount += 1
-            sCost = s.cost + heuristicFn(s)
-            if sCost <= costLimit:
-                if s in openList:
-                    if sCost < openList[s]:
-                        #fringe.remove((openList[s], len(fringe), s))
-                        fringe = [e for e in fringe if e[2] != s]
-        
-                        heapify(fringe)
-                        openList[s] = sCost
-                        heappush(fringe, (sCost, nodeCount, s))
-                else:
-                    openList[s] = sCost
-                    heappush(fringe, (sCost, nodeCount, s))
-            else:
-                print("Cost limit hit")
-
-    print("Failed")
-    print("Nodes evaluated: %i" % nodeCount)
-
-def BestFS(initial, successorFn, goalTestFn, heuristicFn):
-    """
-    Best first search
-    """
-    nodeCount = 1
-    fringe = []
-    openList = {}
-    heappush(fringe, (0, nodeCount, initial))
-    openList[initial] = 0.0
-
-    while fringe:
-        cost, counter, current = heappop(fringe)
-        del openList[current]
-
-        if goalTestFn(current):
-            print("Succeeded!")
-            print("Nodes evaluated: %i" % nodeCount)
-            yield current
-
-        for s in successorFn(current):
-            nodeCount += 1
-            sCost = s.cost + heuristicFn(s)
-            if s in openList:
-                if sCost < openList[s]:
-                    #fringe.remove((openList[s], ), s))
-                    fringe = [e for e in fringe if e[2] != s]
-                    heapify(fringe)
-                    openList[s] = sCost
-                    heappush(fringe, (sCost, nodeCount, s))
-            else:
-                openList[s] = sCost
-                heappush(fringe, (sCost, nodeCount, s))
-
-    print("Failed")
-    print("Nodes evaluated: %i" % nodeCount)
-
-def BestFGS(initial, successorFn, goalTestFn, heuristicFn):
-    nodeCount = 1
-    fringe = []
-    closedList = {}
-    openList = {}
-    heappush(fringe, (0, nodeCount, initial))
-    openList[initial] = 0.0
-
-    while fringe:
-        cost, counter, current = heappop(fringe)
-        del openList[current]
-        closedList[current] = cost
-
-        if goalTestFn(current):
-            #print("Succeeded!")
-            print("Nodes evaluated: %i" % nodeCount)
-            yield current
-
-        for s in successorFn(current):
-            nodeCount += 1
-            sCost = s.cost + heuristicFn(s)
-            if s in openList:
-                if sCost < openList[s]:
-                    fringe = [e for e in fringe if e[2] != s]
-                    heapify(fringe)
-                    openList[s] = sCost
-                    heappush(fringe, (sCost, nodeCount, s))
-            elif s in closedList:
-                if sCost < closedList[s]:
-                    del closedList[s]
-                    openList[s] = sCost
-                    heappush(fringe, (sCost, nodeCount, s))
-            else:
-                openList[s] = sCost
-                heappush(fringe, (sCost, nodeCount, s))
-
-    #print("Failed")
-    #print("Nodes evaluated: %i" % nodeCount)
-
-def BeamS(initial, successorFn, goalTestFn, heuristicFn, initialBeamWidth=1):
-    """
-    Beam Search (allows duplicates)
-    """
-    nodeCount = 1
-    beamMax = False
-    beamWidth = initialBeamWidth
-    while not beamMax:
-        beamMax = True
-        fringe = []
-        openList = {}
-        heappush(fringe, (0, nodeCount, initial))
-        openList[initial] = 0
-
-        while fringe:
-            cost, counter, current = heappop(fringe)
-
-            if goalTestFn(current):
-                #print("Succeeded!")
-                #print("Nodes evaluated: %i" % nodeCount)
-                yield current
-
-            for s in successorFn(current):
-                nodeCount += 1
-                sCost = s.cost + heuristicFn(s)
-                if s in openList:
-                    if sCost < openList[s]:
-                        #fringe.remove((openList[s], s))
-                        fringe = [e for e in fringe if e[2] != s]
-                        heapify(fringe)
-                        openList[s] = sCost
-                        heappush(fringe, (sCost, nodeCount, s))
-                else:
-                    openList[s] = sCost
-                    heappush(fringe, (sCost, nodeCount, s))
-
-            if len(fringe) > beamWidth:
-                best = []
-                openList = {}
-                for i in range(beamWidth):
-                    if fringe:
-                        c, s = heappop(fringe)
-                        openList[s] = c
-                        heappush(best, (cost, nodeCount, s))
-                fringe = best
-                beamMax = False
-        
-        beamWidth += 1
-        #print("Increasing beam width to: %i" % beamWidth)
-
-    #print("Failed")
-    #print("Nodes evaluated: %i" % nodeCount)
-
-def BeamGS(initial, successorFn, goalTestFn, heuristicFn, initialBeamWidth=1):
-    """
-    Beam Grid Search (no duplicates)
-    """
-    nodeCount = 1
-
-    beamMax = False
-    beamWidth = initialBeamWidth
-    while not beamMax:
-        beamMax = True
-        fringe = []
-        openList = {}
-        closedList = {}
-        heappush(fringe, (0, nodeCount, initial))
-        openList[initial] = 0
-
-        while fringe:
-            cost, counter, current = heappop(fringe)
-            del openList[current]
-            closedList[current] = cost
-
-            if goalTestFn(current):
-                #print("Succeeded!")
-                print("Nodes evaluated: %i" % nodeCount)
-                yield current
-
-            for s in successorFn(current):
-                nodeCount += 1
-                sCost = s.cost + heuristicFn(s)
-                if s in openList:
-                    if sCost < openList[s]:
-                        #fringe.remove((openList[s], s))
-                        fringe = [e for e in fringe if e[2] != s]
-                        heapify(fringe)
-                        openList[s] = sCost
-                        heappush(fringe, (sCost, nodeCount, s))
-                elif s in closedList:
-                    if sCost < closedList[s]:
-                        del closedList[s]
-                        openList[s] = sCost
-                        heappush(fringe, (sCost, nodeCount, s))
-                else:
-                    openList[s] = sCost
-                    heappush(fringe, (sCost, nodeCount, s))
-
-            if len(fringe) > beamWidth:
-                best = []
-                openList = {}
-                for i in range(beamWidth):
-                    if fringe:
-                        c, count, s = heappop(fringe)
-                        openList[s] = c
-                        heappush(best, (c, count, s))
-                fringe = best
-                beamMax = False
-        
-        beamWidth += 1
-        print("Increasing beam width to: %i" % beamWidth)
-
-    print("Failed")
-    print("Nodes evaluated: %i" % nodeCount)
+        print("%s - widening beam width to: %i" % (__name__, beam_width))
+
+def compare_searches(problems, searches):
+    table = []
+
+    for problem in problems:
+        for search in searches:
+            annotated_problem = AnnotatedProblem(problem)
+            sol = next(search(annotated_problem))
+
+            value = "Failed"
+            if sol:
+                value = sol.value
+
+            table.append([problem.__class__.__name__, search.__name__,
+                          annotated_problem.goal_tests,
+                          annotated_problem.nodes_expanded, value])
+
+    print(tabulate(table, headers=['Problem', 'Search Alg', 'Goal Tests',
+                                   'Nodes Expanded', 'Solution Value'],
+                   tablefmt="fancy_grid"))

@@ -11,5 +11,5 @@ setuptools.setup(
     license='LICENSE.txt',
     description='A library of graph search algorithms.',
     long_description=open('README.rst').read(),
-    install_requires=[],
+    install_requires=['tabulate'],
 )
