@@ -11,5 +11,5 @@ setuptools.setup(
     license='LICENSE.txt',
     description='A library of search algorithms.',
     long_description=open('README.rst').read(),
-    install_requires=['tabulate'],
+    install_requires=['tabulate', 'blist'],
 )
