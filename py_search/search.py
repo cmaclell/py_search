@@ -389,7 +389,6 @@ def widening_beam_search(problem, search=graph_search, initial_beam_width=1,
                                                       max_length=beam_width)):
             yield solution
         beam_width += 1
-        print("Widening beam width to: %i" % beam_width)
 
 def compare_searches(problems, searches):
     """
