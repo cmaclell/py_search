@@ -315,7 +315,7 @@ def graph_search(problem, fringe):
 
     while len(fringe) > 0:
         node = fringe.pop()
-        closed[node] = node
+        closed[node] = True
 
         if problem.goal_test(node):
             yield node
@@ -323,6 +323,48 @@ def graph_search(problem, fringe):
             for s in problem.successor(node):
                 if s not in closed:
                     fringe.push(s)
+
+def beam_search(problem, beam_width=1):
+    """
+    A variant of best first search where all nodes in the fringe
+    are expanded (i.e, a breadth-first expansion), but the resulting new fringe
+    is limited to have length beam_width.
+    """
+    closed = {}
+    fringe = PrioritySet(node_value=problem.node_value,
+                         max_length=beam_width)
+    fringe.push(problem.initial)
+
+    while len(fringe) > 0:
+        parents = []
+
+        while len(fringe) > 0:
+            parent = fringe.pop()
+            closed[parent] = True
+
+            if problem.goal_test(parent):
+                yield parent
+
+            parents.append(parent)
+
+        for node in parents:
+            for s in problem.successor(node):
+                if s not in closed:
+                    fringe.push(s)
+
+def widening_beam_search(problem, initial_beam_width=1,
+                               max_beam_width=1000):
+    """
+    A variant of beam search that successively increases the beam width. This
+    is similar to iterative deepening search in that it adapts to the
+    complexity of the task. It basically provides a greedy search that on
+    failure becomes less greedy until it can find a solution.
+    """
+    beam_width = initial_beam_width
+    while beam_width <= max_beam_width:
+        for solution in beam_search(problem, beam_width=beam_width):
+            yield solution
+        beam_width += 1
 
 def depth_first_search(problem, search=graph_search):
     for solution in search(problem, LIFOQueue()):
@@ -355,32 +397,32 @@ def iterative_deepening_best_first_search(problem, search=graph_search,
             yield solution
         cost_limit += cost_inc
 
-def beam_search(problem, search=graph_search, beam_width=1):
-    """
-    Similar to best first search, but only maintains a limited number of nodes
-    in the fringe (set by beam_width). If you have a beam_width of 1, then this
-    is basically greedy hill climbing search. However, as beam width is
-    increased the search becomes less and less greedy. If beam_width is set to
-    float('inf') then this is equivelent to best_first_search.
-    """
-    for solution in search(problem, PrioritySet(node_value=problem.node_value,
-                                                  max_length=beam_width)):
-        yield solution
-
-def widening_beam_search(problem, search=graph_search, initial_beam_width=1,
-                         max_beam_width=1000):
-    """
-    A variant of beam search that successively increases the beam width. This
-    is similar to iterative deepening search in that it adapts to the
-    complexity of the task. It basically provides a greedy search that on
-    failure becomes less greedy until it can find a solution.
-    """
-    beam_width = initial_beam_width
-    while beam_width <= max_beam_width:
-        for solution in search(problem, PrioritySet(node_value=problem.node_value,
-                                                      max_length=beam_width)):
-            yield solution
-        beam_width += 1
+#def beam_search(problem, search=graph_search, beam_width=1):
+#    """
+#    Similar to best first search, but only maintains a limited number of nodes
+#    in the fringe (set by beam_width). If you have a beam_width of 1, then this
+#    is basically greedy hill climbing search. However, as beam width is
+#    increased the search becomes less and less greedy. If beam_width is set to
+#    float('inf') then this is equivelent to best_first_search.
+#    """
+#    for solution in search(problem, PrioritySet(node_value=problem.node_value,
+#                                                  max_length=beam_width)):
+#        yield solution
+#
+#def widening_beam_search(problem, search=graph_search, initial_beam_width=1,
+#                         max_beam_width=1000):
+#    """
+#    A variant of beam search that successively increases the beam width. This
+#    is similar to iterative deepening search in that it adapts to the
+#    complexity of the task. It basically provides a greedy search that on
+#    failure becomes less greedy until it can find a solution.
+#    """
+#    beam_width = initial_beam_width
+#    while beam_width <= max_beam_width:
+#        for solution in search(problem, PrioritySet(node_value=problem.node_value,
+#                                                      max_length=beam_width)):
+#            yield solution
+#        beam_width += 1
 
 def compare_searches(problems, searches):
     """
@@ -396,11 +438,12 @@ def compare_searches(problems, searches):
     for problem in problems:
         for search in searches:
             annotated_problem = AnnotatedProblem(problem)
-            sol = next(search(annotated_problem))
 
-            value = "Failed"
-            if sol:
+            try:
+                sol = next(search(annotated_problem))
                 value = sol.cost()
+            except StopIteration:
+                value = 'Failed'
 
             table.append([problem.__class__.__name__, search.__name__,
                           annotated_problem.goal_tests,

@@ -163,6 +163,7 @@ if __name__ == "__main__":
     print()
 
     compare_searches(problems=[EightPuzzleProblem(initial)],
-                     searches=[best_first_search,
+                     searches=[
+                         best_first_search,
                                iterative_deepening_best_first_search,
                                widening_beam_search])
