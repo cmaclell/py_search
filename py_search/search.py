@@ -333,7 +333,7 @@ def graph_search(problem, fringe):
         else:
             for s in problem.successor(node):
                 if s in closed and s.cost() < closed[node].cost():
-                    closed[node].update(s)
+                    closed[node].update_path(s)
                 if s not in closed:
                     fringe.push(s)
 
