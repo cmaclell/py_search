@@ -115,15 +115,6 @@ class Node(object):
         """
         return self.path_cost
 
-    def update_path(self, other):
-        """
-        Update the path the the current node with another nodes path.
-        Specificially, this updates the parent, action, and action_cost.
-        """
-        self.parent = other.parent
-        self.action = other.action
-        self.path_cost = other.path_cost
-
     def path(self):
         """
         Returns a path (tuple of actions) from the initial to current node.
@@ -330,8 +321,6 @@ def graph_search(problem, fringe):
             yield node
         else:
             for s in problem.successor(node):
-                if s in closed and s.cost() < closed[node].cost():
-                    closed[node].update_path(s)
                 if s not in closed:
                     fringe.push(s)
 
