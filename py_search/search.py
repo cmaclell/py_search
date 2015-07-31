@@ -11,7 +11,6 @@ from __future__ import division
 from collections import deque
 from blist import sortedlist
 from tabulate import tabulate
-import uuid
 
 class Problem(object):
     """
@@ -97,7 +96,6 @@ class Node(object):
         self.action = action
         self.path_cost = path_cost
         self.extra = extra
-        self.uuid = uuid.uuid4()
 
     def depth(self):
         """
@@ -154,7 +152,7 @@ class Node(object):
         return not self.__eq__(other)
 
     def __lt__(self, other):
-        return self.uuid < other.uuid
+        return self.path_cost < other.path_cost
 
 class Fringe(object):
     """
