@@ -228,8 +228,13 @@ class LIFOQueue(FIFOQueue):
 
 class PrioritySet(Fringe):
     """
-    A priority queue that sorts elements by their value. Always returns the
-    minimum value item. 
+    A priority set that sorts elements by their value. Always returns the
+    minimum value item. When a duplicate node is added the one with the minimum
+    value is kept. A :class:`PrioritySet` accepts a node_value function, a
+    cost_limit (nodes with a value greater than this limit will not be added)
+    and a max_length parameter. If adding an item ever causes the size to
+    exceed the max_length then the worst nodes are removed until the list is
+    equal to max_length.
 
     >>> pq = PrioritySet()
     >>> n1 = Node(1, path_cost=1)
@@ -242,7 +247,7 @@ class PrioritySet(Fringe):
     >>> pq.push(n7)
 
     >>> print(len(pq))
-    4
+    3
     >>> print(pq.pop().state)
     1
     >>> print(pq.pop().state)
