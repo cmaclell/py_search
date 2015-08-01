@@ -6,3 +6,4 @@ v0.1.5, 7/30/15 -- Fixed bug in updating path
 v0.1.6, 7/31/15 -- Removed uuid because it is slow
 v0.1.7, 7/31/15 -- Fixed bug related to update path
 v0.1.8, 7/31/15 -- Reimplemented beam search to use breadth first expansion.
+v0.1.9, 8/1/15 -- Updated all of the docs and updated beam search to reexpand better duplicates

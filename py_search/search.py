@@ -57,8 +57,8 @@ class AnnotatedProblem(Problem):
         A wrapper for the successor method that keeps track of the number of
         nodes expanded.
         """
+        self.nodes_expanded += 1
         for s in self.problem.successor(node):
-            self.nodes_expanded += 1
             yield s
 
     def goal_test(self, node):
@@ -81,10 +81,8 @@ class Node(object):
     :type parent: :class:`Node`
     :param action: the action performed to transition from parent to current.
     :type action: typically a string, but can be any object
-    :param cost: the cost of reaching the current node
-    :type cost: float
-    :param depth: the distance of the current node from the initial node
-    :type depth: int
+    :param path_cost: the cost of reaching the current node
+    :type path_cost: float
     :param extra: extra information to store in this node, typically used to store non-hashable information about the state.
     :type extra: object
     """
@@ -152,13 +150,22 @@ class Fringe(object):
     """
 
     def push(self, node):
+        """
+        Adds one node to the collection.
+        """
         raise NotImplemented("No push method")
 
     def extend(self, nodes):
+        """
+        Given an iterator (`nodes`) adds all the nodes to the collection.
+        """
         for n in nodes:
             self.push(n)
 
     def pop(self):
+        """
+        Pops a node off the collection.
+        """
         raise NotImplemented("No pop method")
 
     def __len__(self):
@@ -243,9 +250,20 @@ class PrioritySet(Fringe):
     3
     >>> print(pq.pop().state)
     7
+
+    :param node_value: The node evaluation function (defaults to `lambda x:
+        x.cost()`)
+    :type node_value: a function with one parameter for node
+    :param cost_limit: the maximum value for elements in the set, if an item
+        exceeds this limit then it will not be added (defaults to
+        `float('inf')) 
+    :type cost_limit: float
+    :param max_length: The maximum length of the list (defaults to
+        `float('inf')`
+    :type max_length: int or `float('inf')`
     """
 
-    def __init__(self, node_value=lambda x: x.cost(), cost_limit=None,
+    def __init__(self, node_value=lambda x: x.cost(), cost_limit=float('inf'),
                  max_length=float('inf')):
         self.nodes = sortedlist()
         self.open_list = {}
@@ -255,11 +273,15 @@ class PrioritySet(Fringe):
 
     def push(self, node):
         """
-        Push a node into the priority queue.
+        Push a node into the priority set. If the node exceeds the cost limit
+        then it is not added. If the node already exists in the set, then
+        compare the value of the new node to the old one and keep the better
+        one (the other is discarded). Finally, if the max_length is exceeded by
+        adding the node, then the worst node is discarded from the set. 
         """
         value = self.node_value(node)
 
-        if self.cost_limit is not None and value > self.cost_limit:
+        if value > self.cost_limit:
             return
 
         if node in self.open_list and value > self.open_list[node][0]:
@@ -277,6 +299,9 @@ class PrioritySet(Fringe):
             del self.open_list[node]
 
     def pop(self):
+        """
+        Pop the best value from the priority queue.
+        """
         val, node = self.nodes.pop(0)
         del self.open_list[node]
         return node
@@ -287,10 +312,13 @@ class PrioritySet(Fringe):
 def tree_search(problem, fringe):
     """
     Perform tree search (i.e., search where states might be duplicated) using
-    the given fringe class.
+    the given fringe class.Returns an iterators to the solutions, so more than
+    one solution can be found.
 
-    Returns an iterators to the solutions, so more than one solution can be
-    found.
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    :param fringe: The fringe class to use.
+    :type fringe: :class:`fringe`
     """
     fringe.push(problem.initial)
 
@@ -305,10 +333,13 @@ def tree_search(problem, fringe):
 def graph_search(problem, fringe):
     """
     Perform graph search (i.e., no duplicate states) using the given fringe
-    class.
-
-    Returns an iterators to the solutions, so more than one solution can be
+    class. Returns an iterators to the solutions, so more than one solution can be
     found.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    :param fringe: The fringe class to use.
+    :type fringe: :class:`fringe`
     """
     closed = {}
     fringe.push(problem.initial)
@@ -326,9 +357,27 @@ def graph_search(problem, fringe):
 
 def beam_search(problem, beam_width=1):
     """
-    A variant of best first search where all nodes in the fringe
-    are expanded (i.e, a breadth-first expansion), but the resulting new fringe
-    is limited to have length beam_width.
+    A variant of breadth first search where all nodes in the fringe
+    are expanded, but the resulting new fringe is limited to have length
+    beam_width, where the nodes with the worst value are dropped. The default
+    beam width is 1, which yields greedy best-first search.
+
+    There are different ways to implement beam search, namely best-first
+    beam search and breadth-first beam search. According to:
+
+        Wilt, C. M., Thayer, J. T., & Ruml, W. (2010). A comparison of
+        greedy search algorithms. In Third Annual Symposium on Combinatorial
+        Search.
+
+    breadth-first beam search almost always performs better. They find that
+    allowing the search to re-expand duplicate nodes if they have a lower cost
+    improves search performance. Thus, our implementation is a breadth-first
+    beam search that re-expand duplicate nodes with lower cost.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    :param beam_width: The size of the beam (defaults to 1).
+    :type beam_width: int
     """
     closed = {}
     fringe = PrioritySet(node_value=problem.node_value,
@@ -337,28 +386,32 @@ def beam_search(problem, beam_width=1):
 
     while len(fringe) > 0:
         parents = []
-
         while len(fringe) > 0:
             parent = fringe.pop()
-            closed[parent] = True
-
+            closed[parent] = parent.cost()
             if problem.goal_test(parent):
                 yield parent
-
             parents.append(parent)
 
         for node in parents:
             for s in problem.successor(node):
-                if s not in closed:
+                if s not in closed or s.cost() < closed[s]:
                     fringe.push(s)
 
 def widening_beam_search(problem, initial_beam_width=1,
                                max_beam_width=1000):
     """
-    A variant of beam search that successively increases the beam width. This
-    is similar to iterative deepening search in that it adapts to the
-    complexity of the task. It basically provides a greedy search that on
-    failure becomes less greedy until it can find a solution.
+    A variant of beam search that successively increase the beam width when
+    search fails. This ensures that if a solution exists that beam search will
+    find it. However, if you are looking for multiple solutions, then it might
+    return duplicates as the width is increased. 
+
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    :param initial_beam_width: The initial size of the beam (defaults to 1).
+    :type initial_beam_width: int
+    :param max_beam_width: The maximum size of the beam (defaults to 1000).
+    :type max_beam_width: int
     """
     beam_width = initial_beam_width
     while beam_width <= max_beam_width:
@@ -367,14 +420,43 @@ def widening_beam_search(problem, initial_beam_width=1,
         beam_width += 1
 
 def depth_first_search(problem, search=graph_search):
+    """
+    A simple implementation of depth-first search using a LIFO queue.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    :param search: A search algorithm to use (defaults to graph_search).
+    :type search: :func:`graph_search` or :func`tree_search`
+    """
     for solution in search(problem, LIFOQueue()):
         yield solution
 
 def breadth_first_search(problem, search=graph_search):
+    """
+    A simple implementation of depth-first search using a FIFO queue.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    :param search: A search algorithm to use (defaults to graph_search).
+    :type search: :func:`graph_search` or :func`tree_search`
+    """
     for solution in search(problem, FIFOQueue()):
         yield solution
 
 def best_first_search(problem, search=graph_search, cost_limit=float('inf')):
+    """
+    Cost limited best-first search. By default the cost limit is set to
+    `float('inf')`, so it is identical to traditional best-first search. This
+    implementation uses a priority set (i.e., a sorted list without duplicates)
+    to maintain the fringe.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    :param search: A search algorithm to use (defaults to graph_search).
+    :type search: :func:`graph_search` or :func`tree_search`
+    :param cost_limit: The cost limit for the search (default = `float('inf')`)
+    :type cost_limit: float
+    """
     for solution in search(problem, PrioritySet(node_value=problem.node_value,
                                                   cost_limit=cost_limit)):
         yield solution
@@ -384,11 +466,20 @@ def iterative_deepening_best_first_search(problem, search=graph_search,
                                           max_cost_limit=float('inf')): 
     """
     A variant of iterative deepening that uses cost to determine the limit for
-    expansion. If the cost of each action has a uniform cost of 1 and there is
-    no heuristic than this will give reduce to an increasing depth limited
-    search. However, in situations where actions have varying costs and
-    heuristic information is provide this might yield more complicated
-    behavior.
+    expansion. When search fails, the cost limit is increased according to
+    `cost_inc`. If the heuristic is admissible, then this is guranteed to find
+    the best solution (similar to best first serach), but uses less memory.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    :param search: A search algorithm to use (defaults to graph_search).
+    :type search: :func:`graph_search` or :func`tree_search`
+    :param initial_cost_limit: The initial cost limit for the search.
+    :type initial_cost_limit: float
+    :param cost_inc: The amount to increase the cost limit after failure.
+    :type cost_inc: float
+    :param max_cost_limit: The maximum cost limit (default value of `float('inf')`)
+    :type max_cost_limit: float
     """
     cost_limit = initial_cost_limit
     while cost_limit < max_cost_limit:
@@ -396,33 +487,6 @@ def iterative_deepening_best_first_search(problem, search=graph_search,
                                                       node_value=problem.node_value)):
             yield solution
         cost_limit += cost_inc
-
-#def beam_search(problem, search=graph_search, beam_width=1):
-#    """
-#    Similar to best first search, but only maintains a limited number of nodes
-#    in the fringe (set by beam_width). If you have a beam_width of 1, then this
-#    is basically greedy hill climbing search. However, as beam width is
-#    increased the search becomes less and less greedy. If beam_width is set to
-#    float('inf') then this is equivelent to best_first_search.
-#    """
-#    for solution in search(problem, PrioritySet(node_value=problem.node_value,
-#                                                  max_length=beam_width)):
-#        yield solution
-#
-#def widening_beam_search(problem, search=graph_search, initial_beam_width=1,
-#                         max_beam_width=1000):
-#    """
-#    A variant of beam search that successively increases the beam width. This
-#    is similar to iterative deepening search in that it adapts to the
-#    complexity of the task. It basically provides a greedy search that on
-#    failure becomes less greedy until it can find a solution.
-#    """
-#    beam_width = initial_beam_width
-#    while beam_width <= max_beam_width:
-#        for solution in search(problem, PrioritySet(node_value=problem.node_value,
-#                                                      max_length=beam_width)):
-#            yield solution
-#        beam_width += 1
 
 def compare_searches(problems, searches):
     """
