@@ -579,10 +579,18 @@ def hill_climbing_optimization(problem):
     yield b
 
 def temp_exp(initial, iteration, limit):
+    """
+    An exponential (alpha^x) cooling schedule. The exponential cooling rate is
+    selected so that the function reaches a temperature of 0.000001 at the
+    limit. 
+    """
     alpha = exp(log(0.000001 / initial) / limit)
     return initial * pow(alpha, iteration)
 
 def temp_fast(initial, iteration, limit):
+    """
+    A fast (1/x) cooling strategy. 
+    """
     return initial / (iteration+1)
 
 def simulated_annealing_optimization(problem, limit=100, initial_temp=100,
