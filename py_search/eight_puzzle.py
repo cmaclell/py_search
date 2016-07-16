@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
-import random
+from random import choice
 
 from py_search.search import *
 
@@ -53,7 +53,7 @@ class EightPuzzle:
         self.state = tuple(state)
 
         for i in range(num_shuffles):
-            self.executeAction(random.choice([a for a in self.legalActions()]))
+            self.executeAction(choice([a for a in self.legalActions()]))
  
     def executeAction(self, action):
         """
@@ -124,7 +124,7 @@ class EightPuzzleProblem(Problem):
         """
         return node.cost() + self.misplaced_tile_heuristic(node.state)
 
-    def successor(self, node):
+    def successors(self, node):
         """
         Computes successors and computes the value of the node as cost +
         heuristic, which yields A* search when using best first search.
@@ -163,7 +163,6 @@ if __name__ == "__main__":
     print()
 
     compare_searches(problems=[EightPuzzleProblem(initial)],
-                     searches=[
-                         best_first_search,
+                     searches=[best_first_search,
                                iterative_deepening_best_first_search,
                                widening_beam_search])
