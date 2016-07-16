@@ -1,24 +1,24 @@
 py_search package
 =================
 
-py_search.search module
------------------------
+Search
+------
 
 .. automodule:: py_search.search
     :members:
     :undoc-members:
     :show-inheritance:
 
-py_search.eight_puzzle module
------------------------------
+Eight Puzzle
+------------
 
 .. automodule:: py_search.eight_puzzle
     :members:
     :undoc-members:
     :show-inheritance:
 
-py_search.assignment_problem module
------------------------------
+Assignment Problem
+------------------
 
 .. automodule:: py_search.assignment_problem
     :members:
