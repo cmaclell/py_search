@@ -17,3 +17,11 @@ py_search.eight_puzzle module
     :undoc-members:
     :show-inheritance:
 
+py_search.assignment_problem module
+-----------------------------
+
+.. automodule:: py_search.assignment_problem
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
