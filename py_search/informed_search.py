@@ -6,6 +6,10 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
+from py_search.uninformed_search import graph_search
+from py_search.uninformed_search import tree_search
+from py_search.data_structures import PrioritySet
+
 def best_first_search(problem, search=graph_search, cost_limit=float('inf')):
     """
     Cost limited best-first search. By default the cost limit is set to

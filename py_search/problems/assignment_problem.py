@@ -9,7 +9,8 @@ from random import randint
 
 from munkres import Munkres
 
-from py_search.search import *
+from py_search.data_structures import Problem
+from py_search.data_structures import Node
 
 def random_matrix(n):
     """
@@ -76,7 +77,7 @@ class TAssignmentProblem(Problem):
         state = node.state
         return None not in state
 
-class AssignmentProblem(OptimizationProblem):
+class AssignmentProblem(Problem):
     """
     This class represents a local search version of the assignment problem.
     I.e., a random state is generated to start the search and then neighbors of

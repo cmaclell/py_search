@@ -106,6 +106,6 @@ def iterative_deepening_search(problem, search=graph_search,
     """
     depth_limit = initial_depth_limit
     while depth_limit < max_depth_limit:
-        for solution in search(problem, FIFOQueue(), depth_limit=depth_limit)
+        for solution in search(problem, FIFOQueue(), depth_limit=depth_limit):
             yield solution
         depth_limit += depth_inc

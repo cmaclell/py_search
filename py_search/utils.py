@@ -9,6 +9,8 @@ from __future__ import division
 
 from tabulate import tabulate
 
+from py_search.data_structures import AnnotatedProblem
+
 def compare_searches(problems, searches):
     """
     A function for comparing different search algorithms on different problems.
