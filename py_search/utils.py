@@ -9,7 +9,7 @@ from __future__ import division
 
 from tabulate import tabulate
 
-from py_search.data_structures import AnnotatedProblem
+from py_search.base import AnnotatedProblem
 
 def compare_searches(problems, searches):
     """

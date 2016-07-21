@@ -4,11 +4,11 @@ from __future__ import absolute_import
 from __future__ import division
 from random import choice
 
-from py_search.data_structures import Problem
-from py_search.data_structures import Node
-from py_search.informed_search import best_first_search
-from py_search.informed_search import iterative_deepening_best_first_search
-from py_search.informed_search import widening_beam_search
+from py_search.base import Problem
+from py_search.base import Node
+from py_search.informed import best_first_search
+from py_search.informed import iterative_deepening_best_first_search
+from py_search.informed import widening_beam_search
 from py_search.utils import compare_searches
 
 class EightPuzzle:

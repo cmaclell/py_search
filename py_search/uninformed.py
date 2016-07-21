@@ -8,6 +8,10 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
+from py_search.base import LIFOQueue
+from py_search.base import FIFOQueue
+from py_search.base import PrioritySet
+
 def tree_search(problem, fringe, depth_limit=float('inf')):
     """
     Perform tree search (i.e., search where states might be duplicated) using
@@ -51,16 +55,17 @@ def graph_search(problem, fringe, depth_limit=float('inf')):
 
     while len(fringe) > 0:
         node = fringe.pop()
-        closed[node] = True
+        if node in closed:
+            continue
 
+        closed[node] = True
         if problem.goal_test(node):
             yield node
         elif depth_limit == float('inf') or node.depth() < depth_limit:
             for s in problem.successors(node):
-                if s not in closed:
-                    fringe.push(s)
+                fringe.push(s)
 
-def depth_first_search(problem, search=graph_search):
+def depth_first_search(problem, depth_limit=float('inf'), search=graph_search):
     """
     A simple implementation of depth-first search using a LIFO queue.
 
@@ -68,11 +73,14 @@ def depth_first_search(problem, search=graph_search):
     :type problem: :class:`Problem`
     :param search: A search algorithm to use (defaults to graph_search).
     :type search: :func:`graph_search` or :func`tree_search`
+    :param depth_limit: A limit for the depth of the search tree. If set to
+        float('inf'), then depth is unlimited.
+    :type depth_limit: int or float('inf')
     """
-    for solution in search(problem, LIFOQueue()):
+    for solution in search(problem, LIFOQueue(), depth_limit):
         yield solution
 
-def breadth_first_search(problem, search=graph_search):
+def breadth_first_search(problem, depth_limit=float('inf'), search=graph_search):
     """
     A simple implementation of depth-first search using a FIFO queue.
 
@@ -80,8 +88,11 @@ def breadth_first_search(problem, search=graph_search):
     :type problem: :class:`Problem`
     :param search: A search algorithm to use (defaults to graph_search).
     :type search: :func:`graph_search` or :func`tree_search`
+    :param depth_limit: A limit for the depth of the search tree. If set to
+        float('inf'), then depth is unlimited.
+    :type depth_limit: int or float('inf')
     """
-    for solution in search(problem, FIFOQueue()):
+    for solution in search(problem, FIFOQueue(), depth_limit):
         yield solution
 
 def iterative_deepening_search(problem, search=graph_search,
@@ -106,6 +117,7 @@ def iterative_deepening_search(problem, search=graph_search,
     """
     depth_limit = initial_depth_limit
     while depth_limit < max_depth_limit:
-        for solution in search(problem, FIFOQueue(), depth_limit=depth_limit):
+        for solution in depth_first_search(problem, depth_limit, search):
             yield solution
+        print('expanded', problem.nodes_expanded)
         depth_limit += depth_inc

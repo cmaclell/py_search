@@ -1,8 +1,8 @@
 from random import shuffle
 
-from py_search.data_structures import FIFOQueue
-from py_search.data_structures import LIFOQueue
-from py_search.data_structures import PrioritySet
+from py_search.base import FIFOQueue
+from py_search.base import LIFOQueue
+from py_search.base import PrioritySet
 
 def test_fifo_queue():
     """

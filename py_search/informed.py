@@ -1,14 +1,16 @@
 """
-This module includes the informed search techniques: :func:`best_first_search` (i.e., A*), :func:`iterative_deepening_best_first_search` (i.e., IDA*), :func:`beam_search`, and :func:`widening_beam_search`. 
+This module includes the informed search techniques: :func:`best_first_search`
+(i.e., A*), :func:`iterative_deepening_best_first_search` (i.e., IDA*),
+:func:`beam_search`, and :func:`widening_beam_search`. 
 """
 from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from py_search.uninformed_search import graph_search
-from py_search.uninformed_search import tree_search
-from py_search.data_structures import PrioritySet
+from py_search.base import PrioritySet
+from py_search.uninformed import graph_search
+from py_search.uninformed import tree_search
 
 def best_first_search(problem, search=graph_search, cost_limit=float('inf')):
     """

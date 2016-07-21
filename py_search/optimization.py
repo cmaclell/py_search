@@ -12,6 +12,8 @@ from math import pow
 from math import log
 from random import random
 
+from py_search.base import PrioritySet
+
 def hill_climbing_optimization(problem):
     """
     Steepest descent hill climbing. Probably the simplest optimization
@@ -43,9 +45,9 @@ def hill_climbing_optimization(problem):
 
 def beam_optimization(problem, beam_width=1):
     """
-    A variant of :func:`beam_search` that can be applied to local search problems.
-    When the beam width of 1 this approach yields identical behavior to
-    hill_climbing_optimization.
+    A variant of :func:`py_search.informed_search.beam_search` that can be
+    applied to local search problems.  When the beam width of 1 this approach
+    yields identical behavior to :func:`hill_climbing`.
     """
     best = None
     best_val = float('inf')
@@ -92,8 +94,8 @@ def temp_fast(initial, iteration, limit):
     """
     return initial / (iteration+1)
 
-def simulated_annealing_optimization(problem, limit=100, initial_temp=100,
-                                     temp_fun=temp_exp):
+def simulated_annealing(problem, limit=100, initial_temp=100,
+                        temp_fun=temp_exp):
     """
     A more complicated optimization technique. At each iteration a random
     successor is expanded if it is better than the current node. If the random
