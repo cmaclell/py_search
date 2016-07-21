@@ -9,7 +9,9 @@ setuptools.setup(
     include_package_data = True,
     url='http://pypi.python.org/pypi/py_search/',
     license='LICENSE.txt',
-    description='A library of uninformed and heuristic search/optimization algorithms.',
+    description='A library of uninformed, informed, and optimization search algorithms',
     long_description=open('README.rst').read(),
     install_requires=['tabulate', 'blist'],
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest'],
 )
