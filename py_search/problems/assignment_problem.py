@@ -197,9 +197,9 @@ if __name__ == "__main__":
     print(cost(best, costs))
     print()
 
-    print("####################################")
-    print("Local Search Optimization Techniques")
-    print("####################################")
+    print("######################################")
+    print("Local Search / Optimization Techniques")
+    print("######################################")
 
     initial = random_assignment(n)
     problem = LocalAssignmentProblem(initial, initial_cost=cost(initial, costs),
@@ -211,19 +211,19 @@ if __name__ == "__main__":
     print()
 
 
-    def beam_width2(problem):
+    def local_beam_width2(problem):
         return local_beam_search(problem, beam_width=2)
     def annealing_2000steps(problem):
         return simulated_annealing(problem, limit=2000)
 
     compare_searches(problems=[problem],
-                     searches=[hill_climbing ,beam_width2, 
+                     searches=[hill_climbing, local_beam_width2, 
                                annealing_2000steps])
 
     print()
-    print("####################################")
-    print("Tree Search Optimization Techniques")
-    print("####################################")
+    print("###########################")
+    print("Informed Search Techniques")
+    print("###########################")
 
     # TREE SEARCH APPROACH
     empty = tuple([None for i in range(len(costs))])
@@ -235,10 +235,10 @@ if __name__ == "__main__":
 
     tree_problem = AssignmentProblem(empty, extra=(costs, unassigned)) 
 
-    def tree_beam_width2(problem):
+    def beam_width2(problem):
         return beam_search(problem, beam_width=2)
 
     print()
     compare_searches(problems=[tree_problem],
-                     searches=[tree_beam_width2,
+                     searches=[beam_width2,
                                best_first_search])

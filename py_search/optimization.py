@@ -20,6 +20,11 @@ def hill_climbing(problem, graph_search=True):
     approach. Should yield identical results to :func:`local_beam_search` when it has a
     width of 1, but doesn't need to maintain alternatives, so might use slightly
     less memory (just stores the best node instead of limited length priority queue). 
+
+    :param problem: The problem to solve.
+    :type problem: :class:`py_search.base.Problem`
+    :param graph_search: Whether to use graph search (no duplicates) or tree search (duplicates)
+    :type graph_search: Boolean
     """
     b = problem.initial
     bv = problem.node_value(b)
@@ -48,6 +53,13 @@ def local_beam_search(problem, beam_width=1, graph_search=True):
     A variant of :func:`py_search.informed_search.beam_search` that can be
     applied to local search problems.  When the beam width of 1 this approach
     yields identical behavior to :func:`hill_climbing`.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`py_search.base.Problem`
+    :param beam_width: The size of the search beam.
+    :type beam_width: int
+    :param graph_search: Whether to use graph search (no duplicates) or tree search (duplicates)
+    :type graph_search: Boolean
     """
     best = None
     best_val = float('inf')
@@ -99,13 +111,28 @@ def temp_fast(initial, iteration, limit):
     return initial / (iteration+1)
 
 def simulated_annealing(problem, limit=100, initial_temp=100,
-                        temp_fun=temp_exp):
+                        exponential_cooling=True):
     """
     A more complicated optimization technique. At each iteration a random
     successor is expanded if it is better than the current node. If the random
     successor is not better than the current node, then it is expanded with some
     probability based on the temperature.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`py_search.base.Problem`
+    :param limit: The maximum number of nodes to evaluate.
+    :type limit: int
+    :param initial_temp: The initial temperature (default is 100).
+    :type initial_temp: int
+    :param exponential_cooling: Whether to use exponential
+        (initial_temp*alph^k) or fast (initial_temp / k) cooling.
+    :type exponential_cooling: boolean
     """
+    if exponential_cooling:
+        temp_fun = temp_exp
+    else:
+        tem_fun = temp_fast
+
     b = problem.initial
     bv = problem.node_value(b)
 

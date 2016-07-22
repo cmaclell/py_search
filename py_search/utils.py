@@ -35,7 +35,7 @@ def compare_searches(problems, searches):
             table.append([problem.__class__.__name__, search.__name__,
                           annotated_problem.goal_tests,
                           annotated_problem.nodes_expanded,
-                          annotated_problem.nodes_evaluated, value])
+                          annotated_problem.nodes_evaluated, "%0.3f" % value])
 
     print(tabulate(table, headers=['Problem', 'Search Alg', 'Goal Tests',
                                    'Nodes Expanded', 'Nodes Evaluated',
