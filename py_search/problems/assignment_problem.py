@@ -9,7 +9,14 @@ from random import randint
 
 from munkres import Munkres
 
-from py_search.search import *
+from py_search.base import Problem
+from py_search.base import Node
+from py_search.utils import compare_searches
+from py_search.informed import best_first_search
+from py_search.informed import beam_search
+from py_search.optimization import hill_climbing
+from py_search.optimization import simulated_annealing
+from py_search.optimization import local_beam_search
 
 def random_matrix(n):
     """
@@ -20,7 +27,7 @@ def random_matrix(n):
     """
     return [[normalvariate(0,1) for j in range(n)] for i in range(n)]
 
-class TAssignmentProblem(Problem):
+class AssignmentProblem(Problem):
     """
     A tree search version of the assignment problem. Starts with an initially
     empty assignment and then incrementally builds the assignment up adding one
@@ -76,7 +83,7 @@ class TAssignmentProblem(Problem):
         state = node.state
         return None not in state
 
-class AssignmentProblem(OptimizationProblem):
+class LocalAssignmentProblem(Problem):
     """
     This class represents a local search version of the assignment problem.
     I.e., a random state is generated to start the search and then neighbors of
@@ -190,12 +197,12 @@ if __name__ == "__main__":
     print(cost(best, costs))
     print()
 
-    print("####################################")
-    print("Local Search Optimization Techniques")
-    print("####################################")
+    print("######################################")
+    print("Local Search / Optimization Techniques")
+    print("######################################")
 
     initial = random_assignment(n)
-    problem = AssignmentProblem(initial, initial_cost=cost(initial, costs),
+    problem = LocalAssignmentProblem(initial, initial_cost=cost(initial, costs),
                                 extra=(costs,)) 
     print("Initial Assignment (randomly generated):")
     print(initial)
@@ -204,19 +211,19 @@ if __name__ == "__main__":
     print()
 
 
-    def beam_width2(problem):
-        return beam_optimization(problem, beam_width=2)
+    def local_beam_width2(problem):
+        return local_beam_search(problem, beam_width=2)
     def annealing_2000steps(problem):
-        return simulated_annealing_optimization(problem, limit=2000)
+        return simulated_annealing(problem, limit=2000)
 
     compare_searches(problems=[problem],
-                     searches=[hill_climbing_optimization ,beam_width2, 
+                     searches=[hill_climbing, local_beam_width2, 
                                annealing_2000steps])
 
     print()
-    print("####################################")
-    print("Tree Search Optimization Techniques")
-    print("####################################")
+    print("###########################")
+    print("Informed Search Techniques")
+    print("###########################")
 
     # TREE SEARCH APPROACH
     empty = tuple([None for i in range(len(costs))])
@@ -226,12 +233,12 @@ if __name__ == "__main__":
     min_c = [min([row[c] for row in costs]) for c,v in enumerate(costs[0])]
     new_costs = [[v - min_c[c] for c, v in enumerate(row)] for row in costs]
 
-    tree_problem = TAssignmentProblem(empty, extra=(costs, unassigned)) 
+    tree_problem = AssignmentProblem(empty, extra=(costs, unassigned)) 
 
-    def tree_beam_width2(problem):
+    def beam_width2(problem):
         return beam_search(problem, beam_width=2)
 
     print()
     compare_searches(problems=[tree_problem],
-                     searches=[tree_beam_width2,
+                     searches=[beam_width2,
                                best_first_search])

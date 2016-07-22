@@ -2,8 +2,10 @@
 Py Search
 =========
 
-This is a Python library of algorithms that implements various graph search
+This is a Python library of algorithms that implements various search
 algorithms written by Christopher MacLellan (http://www.christopia.net).
+In particular, there are uninformed, informed, and optimization techniques
+implemented with a standard interface.
 
 Installation
 ============

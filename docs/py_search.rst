@@ -1,27 +1,26 @@
-py_search package
+Py-Search Package 
 =================
 
-Search
-------
+Uninformed Search
+-----------------
 
-.. automodule:: py_search.search
+.. automodule:: py_search.uninformed
     :members:
     :undoc-members:
     :show-inheritance:
 
-Eight Puzzle
-------------
+Informed Search
+---------------
 
-.. automodule:: py_search.eight_puzzle
+.. automodule:: py_search.informed
     :members:
     :undoc-members:
     :show-inheritance:
 
-Assignment Problem
-------------------
+Optimization / Local Search
+---------------------------
 
-.. automodule:: py_search.assignment_problem
+.. automodule:: py_search.optimization
     :members:
     :undoc-members:
     :show-inheritance:
-
