@@ -9,3 +9,4 @@ v0.1.8, 7/31/15 -- Reimplemented beam search to use breadth first expansion.
 v0.1.9, 8/1/15 -- Updated all of the docs and updated beam search to reexpand better duplicates
 v0.2.0, 8/1/15 -- Added local search optimization techniques and assignment problem example
 v1.0.0, 7/21/16 -- Refactored library into uninformed, informed, and optimization techniques and added tests.
+v1.0.1, 7/22/16 -- Added N-Queens problem and example.
