@@ -4,9 +4,10 @@
 Contents:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    py_search 
+   problems
    examples
 
 Indices and tables
