@@ -9,6 +9,14 @@ Eight Puzzle
     :undoc-members:
     :show-inheritance:
 
+N-Queens Problem
+----------------
+
+.. automodule:: py_search.problems.nqueens
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Assignment Problem
 ------------------
 
@@ -16,5 +24,3 @@ Assignment Problem
     :members:
     :undoc-members:
     :show-inheritance:
-
-
