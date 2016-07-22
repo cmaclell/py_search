@@ -94,17 +94,12 @@ def beam_search(problem, beam_width=1, graph_search=True):
     closed = {}
     fringe = PriorityQueue(node_value=problem.node_value)
     fringe.push(problem.initial)
+    closed[problem.initial] = problem.initial.cost()
 
     while len(fringe) > 0:
         parents = []
         while len(fringe) > 0 and len(parents) < beam_width:
             parent = fringe.pop()
-            if (graph_search and parent in closed and 
-                parent.cost() >= closed[parent]):
-                continue
-            elif graph_search:
-                closed[parent] = parent.cost()
-
             if problem.goal_test(parent):
                 yield parent
             parents.append(parent)
@@ -112,7 +107,11 @@ def beam_search(problem, beam_width=1, graph_search=True):
 
         for node in parents:
             for s in problem.successors(node):
-                fringe.push(s)
+                if not graph_search:
+                    fringe.push(s)
+                elif s not in closed or s.cost() < closed[s]:
+                    fringe.push(s)
+                    closed[s] = s.cost()
 
 def widening_beam_search(problem, initial_beam_width=1,
                                max_beam_width=1000, graph_search=True):

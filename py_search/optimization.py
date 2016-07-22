@@ -14,36 +14,36 @@ from random import random
 
 from py_search.base import PriorityQueue
 
-def hill_climbing(problem):
+def hill_climbing(problem, graph_search=True):
     """
     Steepest descent hill climbing. Probably the simplest optimization
-    approach. Should yield identical results to beam_optimization when it has a
+    approach. Should yield identical results to :func:`local_beam_search` when it has a
     width of 1, but doesn't need to maintain alternatives, so might use slightly
-    less memory (just stores the best node instead of limited length priority
-    queue). 
+    less memory (just stores the best node instead of limited length priority queue). 
     """
     b = problem.initial
     bv = problem.node_value(b)
-    closed=set()
-    closed.add(problem.initial)
+
+    if graph_search:
+        closed=set()
+        closed.add(problem.initial)
 
     found_better = True
     while found_better:
         found_better = False
         for s in problem.successors(b):
-            if s in closed:
+            if graph_search and s in closed:
                 continue
-
-            closed.add(s)
+            elif graph_search:
+                closed.add(s)
             sv = problem.node_value(s)
             if sv <= bv:
                 b = s
                 bv = sv
                 found_better = True
-
     yield b
 
-def local_beam_search(problem, beam_width=1):
+def local_beam_search(problem, beam_width=1, graph_search=True):
     """
     A variant of :func:`py_search.informed_search.beam_search` that can be
     applied to local search problems.  When the beam width of 1 this approach
@@ -52,11 +52,12 @@ def local_beam_search(problem, beam_width=1):
     best = None
     best_val = float('inf')
 
-    closed = set()
-    fringe = PriorityQueue(node_value=problem.node_value,
-                         max_length=beam_width)
+    fringe = PriorityQueue(node_value=problem.node_value)
     fringe.push(problem.initial)
-    closed.add(problem.initial)
+    
+    if graph_search:
+        closed = set()
+        closed.add(problem.initial)
 
     while len(fringe) > 0:
         pv = fringe.peek_value()
@@ -64,16 +65,19 @@ def local_beam_search(problem, beam_width=1):
             yield best
 
         parents = []
-        while len(fringe) > 0:
+        while len(fringe) > 0 and len(parents) < beam_width:
             parent = fringe.pop()
             parents.append(parent)
+        fringe.clear()
 
         best = parents[0]
         best_val = pv
 
         for node in parents:
             for s in problem.successors(node):
-                if s not in closed:
+                if not graph_search:
+                    fringe.push(s)
+                elif s not in closed:
                     fringe.push(s)
                     closed.add(s)
 

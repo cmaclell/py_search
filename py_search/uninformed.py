@@ -54,18 +54,18 @@ def graph_search(problem, fringe, depth_limit=float('inf')):
     """
     closed = {}
     fringe.push(problem.initial)
+    closed[problem.initial] = problem.initial.cost()
 
     while len(fringe) > 0:
         node = fringe.pop()
-        if node in closed and node.cost() >= closed[node]:
-            continue
-
-        closed[node] = node.cost()
         if problem.goal_test(node):
             yield node
         elif depth_limit == float('inf') or node.depth() < depth_limit:
             for s in problem.successors(node):
-                fringe.push(s)
+                if s not in closed or s.cost() < closed[s]:
+                    fringe.push(s)
+                    closed[s] = s.cost()
+
 
 def depth_first_search(problem, depth_limit=float('inf'), search=graph_search):
     """
@@ -121,5 +121,4 @@ def iterative_deepening_search(problem, search=graph_search,
     while depth_limit < max_depth_limit:
         for solution in depth_first_search(problem, depth_limit, search):
             yield solution
-        print('expanded', problem.nodes_expanded)
         depth_limit += depth_inc

@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from random import randint
 from math import pow
 
 from py_search.base import Node
