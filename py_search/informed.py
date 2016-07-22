@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-from py_search.base import PrioritySet
+from py_search.base import PriorityQueue
 from py_search.uninformed import graph_search
 from py_search.uninformed import tree_search
 
@@ -30,7 +30,7 @@ def best_first_search(problem, search=graph_search, cost_limit=float('inf')):
     :param cost_limit: The cost limit for the search (default = `float('inf')`)
     :type cost_limit: float
     """
-    for solution in search(problem, PrioritySet(node_value=problem.node_value,
+    for solution in search(problem, PriorityQueue(node_value=problem.node_value,
                                                   cost_limit=cost_limit)):
         yield solution
 
@@ -60,12 +60,12 @@ def iterative_deepening_best_first_search(problem, search=graph_search,
     """
     cost_limit = initial_cost_limit
     while cost_limit < max_cost_limit:
-        for solution in search(problem, PrioritySet(cost_limit=cost_limit,
+        for solution in search(problem, PriorityQueue(cost_limit=cost_limit,
                                                       node_value=problem.node_value)):
             yield solution
         cost_limit += cost_inc
 
-def beam_search(problem, beam_width=1):
+def beam_search(problem, beam_width=1, graph_search=True):
     """
     A variant of breadth-first search where all nodes in the fringe
     are expanded, but the resulting new fringe is limited to have length
@@ -88,32 +88,41 @@ def beam_search(problem, beam_width=1):
     :type problem: :class:`Problem`
     :param beam_width: The size of the beam (defaults to 1).
     :type beam_width: int
+    :param graph_search: whether to use graph or tree search.
+    :type graph_search: boolean
     """
     closed = {}
-    fringe = PrioritySet(node_value=problem.node_value,
-                         max_length=beam_width)
+    fringe = PriorityQueue(node_value=problem.node_value)
     fringe.push(problem.initial)
 
     while len(fringe) > 0:
         parents = []
-        while len(fringe) > 0:
+        while len(fringe) > 0 and len(parents) < beam_width:
             parent = fringe.pop()
-            closed[parent] = parent.cost()
+            if (graph_search and parent in closed and 
+                parent.cost() >= closed[parent]):
+                continue
+            elif graph_search:
+                closed[parent] = parent.cost()
+
             if problem.goal_test(parent):
                 yield parent
             parents.append(parent)
+        fringe.clear()
 
         for node in parents:
             for s in problem.successors(node):
-                if s not in closed or s.cost() < closed[s]:
-                    fringe.push(s)
+                fringe.push(s)
 
 def widening_beam_search(problem, initial_beam_width=1,
-                               max_beam_width=1000):
+                               max_beam_width=1000, graph_search=True):
     """
     A variant of beam search that successively increase the beam width when
-    search fails. This ensures that if a solution exists that beam search will
-    find it. However, if you are looking for multiple solutions, then it might
+    search fails. This ensures that if a solution exists, and you're using graph
+    search, and the solution space is finite, then that beam search will
+    find it. 
+
+    However, if you are looking for multiple solutions, then it might
     return duplicates as the width is increased. As the beam width increase, behavior
     is closer and closer to breadth-first search.
 
@@ -126,6 +135,6 @@ def widening_beam_search(problem, initial_beam_width=1,
     """
     beam_width = initial_beam_width
     while beam_width <= max_beam_width:
-        for solution in beam_search(problem, beam_width=beam_width):
+        for solution in beam_search(problem, beam_width=beam_width, graph_search=graph_search):
             yield solution
         beam_width += 1

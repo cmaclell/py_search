@@ -10,7 +10,7 @@ from __future__ import division
 
 from py_search.base import LIFOQueue
 from py_search.base import FIFOQueue
-from py_search.base import PrioritySet
+from py_search.base import PriorityQueue
 
 def tree_search(problem, fringe, depth_limit=float('inf')):
     """
@@ -42,6 +42,8 @@ def graph_search(problem, fringe, depth_limit=float('inf')):
     class. Returns an iterator to the solutions, so more than one solution can
     be found.
 
+    Note that the closed list will allow re-expansion of nodes with a lower cost.
+
     :param problem: The problem to solve.
     :type problem: :class:`Problem`
     :param fringe: The fringe class to use.
@@ -55,10 +57,10 @@ def graph_search(problem, fringe, depth_limit=float('inf')):
 
     while len(fringe) > 0:
         node = fringe.pop()
-        if node in closed:
+        if node in closed and node.cost() >= closed[node]:
             continue
 
-        closed[node] = True
+        closed[node] = node.cost()
         if problem.goal_test(node):
             yield node
         elif depth_limit == float('inf') or node.depth() < depth_limit:

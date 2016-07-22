@@ -12,9 +12,9 @@ from math import pow
 from math import log
 from random import random
 
-from py_search.base import PrioritySet
+from py_search.base import PriorityQueue
 
-def hill_climbing_optimization(problem):
+def hill_climbing(problem):
     """
     Steepest descent hill climbing. Probably the simplest optimization
     approach. Should yield identical results to beam_optimization when it has a
@@ -43,7 +43,7 @@ def hill_climbing_optimization(problem):
 
     yield b
 
-def beam_optimization(problem, beam_width=1):
+def local_beam_search(problem, beam_width=1):
     """
     A variant of :func:`py_search.informed_search.beam_search` that can be
     applied to local search problems.  When the beam width of 1 this approach
@@ -53,7 +53,7 @@ def beam_optimization(problem, beam_width=1):
     best_val = float('inf')
 
     closed = set()
-    fringe = PrioritySet(node_value=problem.node_value,
+    fringe = PriorityQueue(node_value=problem.node_value,
                          max_length=beam_width)
     fringe.push(problem.initial)
     closed.add(problem.initial)

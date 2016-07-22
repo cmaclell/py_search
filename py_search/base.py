@@ -252,7 +252,7 @@ class LIFOQueue(FIFOQueue):
     def pop(self):
         return self.nodes.pop()
 
-class PrioritySet(Fringe):
+class PriorityQueue(Fringe):
     """
     A priority set that sorts elements by their value. Always returns the
     minimum value item. When a duplicate node is added the one with the minimum
@@ -262,7 +262,7 @@ class PrioritySet(Fringe):
     exceed the max_length then the worst nodes are removed until the list is
     equal to max_length.
 
-    >>> pq = PrioritySet(node_value=lambda x: x, max_length=3)
+    >>> pq = PriorityQueue(node_value=lambda x: x, max_length=3)
     >>> pq.push(6)
     >>> pq.push(0)
     >>> pq.push(2)
@@ -291,10 +291,15 @@ class PrioritySet(Fringe):
     def __init__(self, node_value=lambda x: x.cost(), cost_limit=float('inf'),
                  max_length=float('inf')):
         self.nodes = sortedlist()
-        self.open_list = {}
         self.max_length = max_length
         self.cost_limit = cost_limit
         self.node_value = node_value
+
+    def clear(self):
+        """
+        Empties the sorted list.
+        """
+        self.nodes = sortedlist()
 
     def peek_value(self):
         """
@@ -304,10 +309,8 @@ class PrioritySet(Fringe):
 
     def push(self, node):
         """
-        Push a node into the priority set. If the node exceeds the cost limit
-        then it is not added. If the node already exists in the set, then
-        compare the value of the new node to the old one and keep the better
-        one (the other is discarded). Finally, if the max_length is exceeded by
+        Push a node into the priority queue. If the node exceeds the cost limit
+        then it is not added. If the max_length is exceeded by
         adding the node, then the worst node is discarded from the set. 
         """
         value = self.node_value(node)
@@ -315,27 +318,18 @@ class PrioritySet(Fringe):
         if value > self.cost_limit:
             return
 
-        if node in self.open_list and value > self.open_list[node][0]:
-            return
-
-        if node in self.open_list:
-            self.nodes.remove(self.open_list[node])
-            del self.open_list[node]
-
         self.nodes.add((value, node))
-        self.open_list[node] = (value, node)
 
         if len(self.nodes) > self.max_length:
             val, node = self.nodes.pop()
-            del self.open_list[node]
 
     def pop(self):
         """
         Pop the best value from the priority queue.
         """
         val, node = self.nodes.pop(0)
-        del self.open_list[node]
         return node
 
     def __len__(self):
         return len(self.nodes)
+

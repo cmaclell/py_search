@@ -14,9 +14,9 @@ from py_search.base import Node
 from py_search.utils import compare_searches
 from py_search.informed import best_first_search
 from py_search.informed import beam_search
-from py_search.optimization import hill_climbing_optimization
+from py_search.optimization import hill_climbing
 from py_search.optimization import simulated_annealing
-from py_search.optimization import beam_optimization
+from py_search.optimization import local_beam_search
 
 def random_matrix(n):
     """
@@ -217,7 +217,7 @@ if __name__ == "__main__":
         return simulated_annealing(problem, limit=2000)
 
     compare_searches(problems=[problem],
-                     searches=[local_hill_climbing ,beam_width2, 
+                     searches=[hill_climbing ,beam_width2, 
                                annealing_2000steps])
 
     print()

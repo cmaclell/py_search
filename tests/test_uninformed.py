@@ -105,7 +105,6 @@ def test_iterative_deepening_graph_search():
     Test iterative deepening graph search.
     """
     for goal in range(1,10):
-        print(goal)
         p = AnnotatedProblem(TestProblem(0, extra=goal))
         sol = next(iterative_deepening_search(p, search=graph_search))
         assert sol.state == goal
