@@ -13,6 +13,7 @@ from py_search.informed import best_first_search
 from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import beam_search
 from py_search.optimization import hill_climbing
+from py_search.optimization import local_beam_search
 from py_search.optimization import simulated_annealing
 
 from py_search.utils import compare_searches
@@ -143,6 +144,11 @@ class LocalnQueensProblem(Problem):
                 new_state.state = tuple(ns)
                 yield Node(new_state, node, ('swap', (r1,c1), (r2,c2)),
                            new_state.num_conflicts())
+
+    def random_node(self):
+        nq_state = self.initial.state.copy()
+        nq_state.randomize()
+        return Node(nq_state, None, None, nq_state.num_conflicts())
 
     def random_successor(self, node):
         """
