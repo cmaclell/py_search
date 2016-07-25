@@ -14,16 +14,22 @@ from random import random
 
 from py_search.base import PriorityQueue
 
-def hill_climbing(problem, graph_search=True):
+def hill_climbing(problem, random_restarts=0, graph_search=True):
     """
     Steepest descent hill climbing. Probably the simplest optimization
-    approach. Should yield identical results to :func:`local_beam_search` when it has a
-    width of 1, but doesn't need to maintain alternatives, so might use slightly
-    less memory (just stores the best node instead of limited length priority queue). 
+    approach. Should yield identical results to :func:`local_beam_search` when
+    it has a width of 1, but doesn't need to maintain alternatives, so might
+    use slightly less memory (just stores the best node instead of limited
+    length priority queue). 
 
     :param problem: The problem to solve.
     :type problem: :class:`py_search.base.Problem`
-    :param graph_search: Whether to use graph search (no duplicates) or tree search (duplicates)
+    :param random_restarts: The number of times to restart search. The
+        initial state is used for the first search and subsequent starts begin
+        at a random state.
+    :type random_restarts: int
+    :param graph_search: Whether to use graph search (no duplicates) or tree
+        search (duplicates)
     :type graph_search: Boolean
     """
     b = problem.initial
@@ -33,19 +39,37 @@ def hill_climbing(problem, graph_search=True):
         closed=set()
         closed.add(problem.initial)
 
-    found_better = True
-    while found_better:
-        found_better = False
-        for s in problem.successors(b):
-            if graph_search and s in closed:
-                continue
-            elif graph_search:
-                closed.add(s)
-            sv = problem.node_value(s)
-            if sv <= bv:
-                b = s
-                bv = sv
-                found_better = True
+    c = b
+    cv = bv
+
+    while random_restarts >= 0:
+        found_better = True
+        while found_better:
+            found_better = False
+            for s in problem.successors(b):
+                if graph_search and s in closed:
+                    continue
+                elif graph_search:
+                    closed.add(s)
+                sv = problem.node_value(s)
+                if sv <= bv:
+                    b = s
+                    bv = sv
+                if sv <= cv:
+                    b = s
+                    cv = sv
+                    found_better = True
+
+        random_restarts -= 1
+        if random_restarts >= 0:
+            c = problem.random_node()
+            cv = problem.node_value(c)
+            if graph_search:
+                closed.add(problem.initial)
+            if cv <= bv:
+                b = c
+                bv = cv
+
     yield b
 
 def local_beam_search(problem, beam_width=1, graph_search=True):
@@ -58,7 +82,8 @@ def local_beam_search(problem, beam_width=1, graph_search=True):
     :type problem: :class:`py_search.base.Problem`
     :param beam_width: The size of the search beam.
     :type beam_width: int
-    :param graph_search: Whether to use graph search (no duplicates) or tree search (duplicates)
+    :param graph_search: Whether to use graph search (no duplicates) or tree
+        search (duplicates)
     :type graph_search: Boolean
     """
     best = None
@@ -66,6 +91,9 @@ def local_beam_search(problem, beam_width=1, graph_search=True):
 
     fringe = PriorityQueue(node_value=problem.node_value)
     fringe.push(problem.initial)
+
+    while len(fringe) < beam_width:
+        fringe.push(problem.random_node())
     
     if graph_search:
         closed = set()
