@@ -46,11 +46,23 @@ class Problem(object):
 
     def random_successor(self, node):
         """
-        This method should return a single successor node.
+        This method should return a single successor node. This is used
+        by some of the local search / optimization techniques. 
         """
         raise NotImplemented("No random successor implemented!")
 
+    def random_node(self):
+        """
+        This method returns a random node in the search space. This 
+        is used by some of the local search / optimization techniques.
+        """
+        raise NotImplemented("No random node implemented!")
+
     def goal_test(self, node):
+        """
+        Returns true if a goal state is found. This is typically used not used
+        by the local search / optimization techniques.
+        """
         raise NotImplemented("No goal test function implemented")
 
 class AnnotatedProblem(Problem):
@@ -72,6 +84,12 @@ class AnnotatedProblem(Problem):
         """
         self.nodes_expanded += 1
         return self.problem.random_successor(node)
+
+    def random_node(self):
+        """
+        A wrapper for the random_node method.
+        """
+        return self.problem.random_node()
 
     def node_value(self, node):
         """
