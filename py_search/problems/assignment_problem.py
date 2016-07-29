@@ -147,6 +147,15 @@ class LocalAssignmentProblem(Problem):
 
             yield Node(tuple(state), node, p, new_cost, extra=node.extra)
 
+    def random_node(self):
+        """
+        Generates a node that has a random assignment.
+        """
+        state = random_assignment(len(self.initial.state))
+        return Node(state, 
+                    path_cost=cost(state, self.initial.extra[0]),
+                    extra=self.initial.extra)
+
 def random_assignment(n):
     """
     Returns a random valid assignment for an n x n matrix
