@@ -46,7 +46,6 @@ Assignment Problem Optimization Example
        ...:     print(problem.initial.cost())
        ...:     print()
        ...: 
-       ...: 
        ...:     def local_beam_width2(problem):
        ...:         return local_beam_search(problem, beam_width=2)
        ...:     def annealing_2000steps(problem):
