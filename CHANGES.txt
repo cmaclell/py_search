@@ -11,3 +11,5 @@ v0.2.0, 8/1/15 -- Added local search optimization techniques and assignment prob
 v1.0.0, 7/21/16 -- Refactored library into uninformed, informed, and optimization techniques and added tests.
 v1.0.1, 7/22/16 -- Added N-Queens problem and example.
 v1.0.2, 7/25/16 -- Added random node to problem and random seeds to hill climbing and local beam search
+v1.0.3, 7/29/16 -- Fixed some issues with the docs. Added random_node function
+to local assignment search.
