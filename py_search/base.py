@@ -5,7 +5,7 @@ the different search problems, and the :class:`AnnotatedProblem` class, which wr
 around a specific problem and keeps track of the number of core method
 calls. 
 
-At a lower level this module aslo contains the :class:`Node` class, which is used
+At a lower level this module also contains the :class:`Node` class, which is used
 to represent a node in the search space. 
 
 Finally, the module contains the :class:`Fringe` class, and its instantiations
