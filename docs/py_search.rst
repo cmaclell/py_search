@@ -1,6 +1,14 @@
 Py-Search Package 
 =================
 
+Base
+----
+
+.. automodule:: py_search.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 Uninformed Search
 -----------------
 
