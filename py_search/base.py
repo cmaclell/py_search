@@ -24,7 +24,7 @@ class Problem(object):
     """
     The basic problem to solve. The main functions that must be defined include
     successors and goal_test. Some search techniques also require the
-    random_successor and predecessors methods to be implemented. 
+    random_successor and predecessors methods to be implemented.
     """
     def __init__(self, initial, parent=None, action=None, initial_cost=0,
                  extra=None):
@@ -271,7 +271,7 @@ class LIFOQueue(FIFOQueue):
         return self.nodes.pop()
 
 class PriorityQueue(Fringe):
-    """
+    """ 
     A priority set that sorts elements by their value. Always returns the
     minimum value item. When a duplicate node is added the one with the minimum
     value is kept. A :class:`PrioritySet` accepts a node_value function, a
@@ -295,16 +295,16 @@ class PriorityQueue(Fringe):
     >>> print(pq.pop())
     6
 
-    :param node_value: The node evaluation function (defaults to `lambda x:
-        x.cost()`)
+    :param node_value: The node evaluation function (defaults to 
+        ``lambda x: x.cost()``)
     :type node_value: a function with one parameter for node
     :param cost_limit: the maximum value for elements in the set, if an item
         exceeds this limit then it will not be added (defaults to
-        `float('inf')) 
+        ``float('inf'))``
     :type cost_limit: float
     :param max_length: The maximum length of the list (defaults to
-        `float('inf')`
-    :type max_length: int or `float('inf')`
+        ``float('inf')``
+    :type max_length: int or ``float('inf')``
     """
     def __init__(self, node_value=lambda x: x.cost(), cost_limit=float('inf'),
                  max_length=float('inf')):
