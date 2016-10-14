@@ -128,27 +128,30 @@ class LocalnQueensProblem(Problem):
     A class that wraps around the nQueens object. This version of the problem
     starts with an empty board and then progressively adds queens. 
     """
+    def node_value(self, node):
+        return node.state.num_conflicts()
+
     def successors(self, node):
         """
         Generate all permutations of rows.
         """
-        for r1,c1 in enumerate(node.state.state):
-            for r2,c2 in enumerate(node.state.state):
-                if r2 <= r1:
-                    continue
+        for r1 in range(len(node.state.state)):
+            c1 = node.state.state[r1]
+
+            for r2 in range(r1+1, len(node.state.state)):
+                c2 = node.state.state[r2]
 
                 new_state = node.state.copy()
                 ns = [i for i in node.state.state]
                 ns[r1] = c2
                 ns[r2] = c1
                 new_state.state = tuple(ns)
-                yield Node(new_state, node, ('swap', (r1,c1), (r2,c2)),
-                           new_state.num_conflicts())
+                yield Node(new_state, node, ('swap', (r1,c1), (r2,c2)))
 
     def random_node(self):
         nq_state = self.initial.state.copy()
         nq_state.randomize()
-        return Node(nq_state, None, None, nq_state.num_conflicts())
+        return Node(nq_state, None, None)
 
     def random_successor(self, node):
         """
@@ -167,8 +170,7 @@ class LocalnQueensProblem(Problem):
         ns[r1] = c2
         ns[r2] = c1
         new_state.state = tuple(ns)
-        return Node(new_state, node, ('swap', (r1,c1), (r2,c2)),
-                   new_state.num_conflicts())
+        return Node(new_state, node, ('swap', (r1,c1), (r2,c2)))
 
     def goal_test(self, node):
         """
@@ -200,25 +202,46 @@ if __name__ == "__main__":
     print("LOCAL SEARCH / OPTIMZATION")
     print("##########################")
 
-    initial = nQueens(20)
+    initial = nQueens(10)
     initial.randomize()
     print("Random %i-Queens Problem" % initial.n)
     print(initial)
+    print(initial.num_conflicts())
     print()
+
+    def steepest_hill(problem):
+        return hill_climbing(problem, cost_limit=0)
+
+    def annealing(problem):
+        size = problem.initial.state.n
+        n_neighbors = (size * (size-1)) // 2
+        return simulated_annealing(problem, cost_limit=0,
+                                   initial_temp=0.8,
+                                   temp_length=n_neighbors // 2)
+
+    def greedy_annealing(problem):
+        size = problem.initial.state.n
+        n_neighbors = (size * (size-1)) // 2
+        return simulated_annealing(problem, cost_limit=0,
+                                   initial_temp=1e-2,
+                                   temp_length=n_neighbors // 2)
 
     compare_searches(problems=[LocalnQueensProblem(initial)],
                      searches=[best_first_search,
                                beam_search,
-                               hill_climbing,
-                               simulated_annealing])
+                               steepest_hill,
+                               greedy_annealing,
+                               annealing])
     print()
 
     initial = nQueens(50)
     initial.randomize()
     print("Random %i-Queens Problem" % initial.n)
     print(initial)
+    print(initial.num_conflicts())
     print()
 
     compare_searches(problems=[LocalnQueensProblem(initial)],
-                     searches=[hill_climbing,
-                               simulated_annealing])
+                     searches=[steepest_hill,
+                               greedy_annealing,
+                               annealing])

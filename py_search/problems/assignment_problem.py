@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
-from itertools import permutations
+from itertools import combinations
 from random import normalvariate
 from random import shuffle
 from random import randint
@@ -133,7 +133,7 @@ class LocalAssignmentProblem(Problem):
         """
         costs = node.extra[0]
 
-        for p in permutations(node.state, 2):
+        for p in combinations(node.state, 2):
             new_cost = node.cost()
             new_cost -= costs[p[0]][node.state[p[0]]]
             new_cost -= costs[p[1]][node.state[p[1]]]
@@ -183,7 +183,7 @@ def print_matrix(m):
 
 if __name__ == "__main__":
 
-    n = 8
+    n = 8 
     costs = random_matrix(n)
 
     print()
@@ -222,12 +222,24 @@ if __name__ == "__main__":
 
     def local_beam_width2(problem):
         return local_beam_search(problem, beam_width=2)
-    def annealing_2000steps(problem):
-        return simulated_annealing(problem, limit=2000)
+
+    def greedy_annealing(problem):
+        num_neighbors = (n * (n-1)) // 2
+        print(num_neighbors)
+        return simulated_annealing(problem, initial_temp=1e-3,
+                                   temp_length=num_neighbors//2)
+
+    def annealing(problem):
+        num_neighbors = (n * (n-1)) // 2
+        print(num_neighbors)
+        return simulated_annealing(problem, initial_temp=1.5,
+                                   temp_length=num_neighbors//2)
 
     compare_searches(problems=[problem],
-                     searches=[hill_climbing, local_beam_width2, 
-                               annealing_2000steps])
+                     searches=[hill_climbing, 
+                               local_beam_width2, 
+                               greedy_annealing,
+                               annealing])
 
     print()
     print("###########################")
