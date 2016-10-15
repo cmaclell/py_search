@@ -29,7 +29,7 @@ N-Queens Search Example
        ...: print("##########################")
        ...: print("LOCAL SEARCH / OPTIMZATION")
        ...: print("##########################")
-       ...: initial = nQueens(20)
+       ...: initial = nQueens(10)
        ...: initial.randomize()
        ...: print("Random %i-Queens Problem" % initial.n)
        ...: print(initial)
@@ -61,7 +61,7 @@ N-Queens Search Example
        ...:                            steepest_hill,
        ...:                            annealing, greedy_annealing])
        ...: print()
-       ...: initial = nQueens(50)
+       ...: initial = nQueens(20)
        ...: initial.randomize()
        ...: print("Random %i-Queens Problem" % initial.n)
        ...: print(initial)
