@@ -11,8 +11,8 @@ Graph Partition Optimization Example
        ...:     from py_search.optimization import hill_climbing
        ...:     from py_search.utils import compare_searches
        ...:
-       ...:     n = 20
-       ...:     p = 10 / (n-1)
+       ...:     n = 10
+       ...:     p = 5 / (n-1)
        ...:     print(n, p)
        ...:     V, E = generate_graph(n, p)
        ...:     initial = random_partition(V)
