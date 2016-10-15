@@ -101,7 +101,7 @@ def cutsize(E, p):
 
 if __name__ == "__main__":
 
-    n = 60
+    n = 30
     p = 20 / (n-1)
     print(n, p)
     V, E = generate_graph(n, p)
