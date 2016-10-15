@@ -19,7 +19,7 @@ def hill_climbing(problem, random_restarts=0, graph_search=True,
     Probably the simplest optimization approach. It expands the list of
     neighbors and chooses the best neighbor (steepest descent hill climbing). 
     
-    Default configuration should yield identical results to
+    Default configuration should yield similar behavior to
     :func:`local_beam_search` when it has a width of 1, but doesn't need to
     maintain alternatives, so might use slightly less memory (just stores the
     best node instead of limited length priority queue). 
@@ -103,7 +103,7 @@ def local_beam_search(problem, beam_width=1, graph_search=True,
     """
     A variant of :func:`py_search.informed_search.beam_search` that can be
     applied to local search problems.  When the beam width of 1 this approach
-    yields identical behavior to :func:`hill_climbing`.
+    yields behavior similar to :func:`hill_climbing`.
 
     :param problem: The problem to solve.
     :type problem: :class:`py_search.base.Problem`
@@ -177,10 +177,9 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
     :param temp_factor: The factor for geometric cooling, a value between 0 and
         1, but usually very close to 1. 
     :type temp_factor: float
-    :param temp_length: The number of nodes to expand at each temperature.
-    If set to None (the default) then it is automatically chosen to be equal to
-    the length of the successors list (i.e.,
-    len(list(problem.successors(initial)))).
+    :param temp_length: The number of nodes to expand at each temperature. If
+        set to `None` (the default) then it is automatically chosen to be equal
+        to the length of the successors list.
     :type temp_length: int
     :param initial_temp: The initial temperature for the annealing. The number
         is objective function specific. If set to None (the default), then
@@ -198,7 +197,7 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
         cost_limit is found, then it is immediately returned. Default is -inf.
     :type cost_limit: float
     :param limit: The maximum number of iterations (random neighbors) to expand
-    before stopping. 
+        before stopping. 
     :type limit: float
     """
     T = initial_temp

@@ -24,3 +24,11 @@ Assignment Problem
     :members:
     :undoc-members:
     :show-inheritance:
+
+Graph Partition Problem
+-----------------------
+
+.. automodule:: py_search.problems.graph_partition
+    :members:
+    :undoc-members:
+    :show-inheritance:
