@@ -13,8 +13,8 @@ from random import random
 
 from py_search.base import PriorityQueue
 
-def hill_climbing(problem, random_restarts=0, graph_search=True,
-                  cost_limit=float('-inf')):
+def hill_climbing(problem, random_restarts=0, max_sideways=100,
+                  graph_search=True, cost_limit=float('-inf')):
     """
     Probably the simplest optimization approach. It expands the list of
     neighbors and chooses the best neighbor (steepest descent hill climbing). 
@@ -41,6 +41,8 @@ def hill_climbing(problem, random_restarts=0, graph_search=True,
         initial state is used for the first search and subsequent starts begin
         at a random state.
     :type random_restarts: int
+    :param max_sideways: Specifies the max number of contiguous sideways moves. 
+    :type max_sideways: int
     :param graph_search: Whether to use graph search (no duplicates) or tree
         search (duplicates)
     :type graph_search: Boolean
@@ -63,8 +65,10 @@ def hill_climbing(problem, random_restarts=0, graph_search=True,
 
     while random_restarts >= 0:
         found_better = True
-        while found_better:
+        sideways_moves = 0
+        while found_better and sideways_moves < max_sideways:
             found_better = False
+            prev_cost = cv
             for s in problem.successors(c):
                 if graph_search and s in closed:
                     continue
@@ -80,6 +84,10 @@ def hill_climbing(problem, random_restarts=0, graph_search=True,
                     c = s
                     cv = sv
                     found_better = True
+            if cv == prev_cost:
+                sideways_moves += 1
+            else:
+                sideways_moves = 0
 
         random_restarts -= 1
         if random_restarts >= 0:
@@ -98,8 +106,8 @@ def hill_climbing(problem, random_restarts=0, graph_search=True,
 
     yield b
 
-def local_beam_search(problem, beam_width=1, graph_search=True,
-                      cost_limit=float('-inf')):
+def local_beam_search(problem, beam_width=1, max_sideways=100,
+                      graph_search=True, cost_limit=float('-inf')):
     """
     A variant of :func:`py_search.informed_search.beam_search` that can be
     applied to local search problems.  When the beam width of 1 this approach
@@ -109,12 +117,15 @@ def local_beam_search(problem, beam_width=1, graph_search=True,
     :type problem: :class:`py_search.base.Problem`
     :param beam_width: The size of the search beam.
     :type beam_width: int
+    :param max_sideways: Specifies the max number of contiguous sideways moves. 
+    :type max_sideways: int
     :param graph_search: Whether to use graph search (no duplicates) or tree
         search (duplicates)
     :type graph_search: Boolean
     """
     b = None
     bv = float('inf')
+    sideways_moves = 0
 
     fringe = PriorityQueue(node_value=problem.node_value)
     fringe.push(problem.initial)
@@ -126,11 +137,16 @@ def local_beam_search(problem, beam_width=1, graph_search=True,
         closed = set()
         closed.add(problem.initial)
 
-    while len(fringe) > 0:
+    while len(fringe) > 0 and sideways_moves < max_sideways:
         pv = fringe.peek_value()
 
         if pv > bv:
             yield b
+
+        if pv == bv:
+            sideways_moves += 1
+        else:
+            sideways_moves = 0
 
         parents = []
         while len(fringe) > 0 and len(parents) < beam_width:
@@ -160,7 +176,8 @@ def local_beam_search(problem, beam_width=1, graph_search=True,
 
 def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
                         initial_temp=None, init_prob=0.4, min_accept=0.02,
-                        cost_limit=float('-inf'), limit=float('inf')):
+                        min_change=1e-6, cost_limit=float('-inf'),
+                        limit=float('inf')):
     """
     A more complicated optimization technique. At each iteration a random
     successor is expanded if it is better than the current node. If the random
@@ -193,6 +210,12 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
         incremented until it hits 5. If a better state is found, then the
         frozen counter is reset to 0.
     :type min_accept: float between 0 and 1
+    :param min_change: The amount of change that must be achieved in
+        temp_length iterations (taken from a single temperature) to not be
+        frozen.  Everytime this is not exceeded, the frozen counter is
+        incremented until it hits 5. If a better state is found, then the
+        frozen counter is reset to 0.
+    :type min_change: float
     :param cost_limit: A lower bound on the cost, if a node with value <=
         cost_limit is found, then it is immediately returned. Default is -inf.
     :type cost_limit: float
@@ -224,6 +247,7 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
 
     while frozen < 5:
         acceptances = 0
+        changes = 0
 
         for i in range(temp_length):
             iterations += 1
@@ -245,6 +269,7 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
             if (delta_e <= 0 or (T is None and random() < 0.5) or 
                 (T is not None and T > 1e-2 and random() < exp(-delta_e/T))):
                 acceptances += 1
+                changes += delta_e
                 c = s
                 cv = sv
 
@@ -257,7 +282,8 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
         else:
             T = temp_factor * T
 
-        if (acceptances / temp_length) < min_accept:
+        if ((acceptances / temp_length) < min_accept or 
+            abs(changes) < min_change):
             frozen += 1
 
     yield b
