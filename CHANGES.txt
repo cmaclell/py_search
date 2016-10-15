@@ -13,3 +13,6 @@ v1.0.1, 7/22/16 -- Added N-Queens problem and example.
 v1.0.2, 7/25/16 -- Added random node to problem and random seeds to hill climbing and local beam search
 v1.0.3, 7/29/16 -- Fixed some issues with the docs. Added random_node function
 to local assignment search.
+v1.0.4, 11/15/16 -- Improved simulatd annealing algorithm based on Johnson
+paper. It now automatically initializes paramters and terminates on
+convergence.

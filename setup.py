@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='py_search',
-    version='1.0.3',
+    version='1.0.4',
     author='Christopher J. MacLellan',
     author_email='maclellan.christopher@gmail.com',
     packages=setuptools.find_packages(),
