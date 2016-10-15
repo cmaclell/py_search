@@ -11,13 +11,11 @@ from random import normalvariate
 from py_search.base import Node
 from py_search.base import Problem
 from py_search.base import AnnotatedProblem
-from py_search.uninformed import tree_search
-from py_search.uninformed import graph_search
 from py_search.optimization import hill_climbing
 from py_search.optimization import local_beam_search
 from py_search.optimization import simulated_annealing
 
-class TestProblem(Problem):
+class EasyProblem(Problem):
     
     def successors(self, node):
         for i in range(100):
@@ -35,7 +33,7 @@ def test_hill_climbing():
     initial = 0
     goal = 10
     limits = (-goal, goal)
-    p = AnnotatedProblem(TestProblem(initial, initial_cost=initial, extra=limits))
+    p = AnnotatedProblem(EasyProblem(initial, initial_cost=initial, extra=limits))
     sol = next(hill_climbing(p, graph_search=False))
     assert abs(sol.state - limits[0]) <= 0.1
 
@@ -43,7 +41,7 @@ def test_local_beam_search():
     initial = 0
     goal = 10
     limits = (-goal, goal)
-    p = AnnotatedProblem(TestProblem(initial, initial_cost=initial, extra=limits))
+    p = AnnotatedProblem(EasyProblem(initial, initial_cost=initial, extra=limits))
     sol = next(local_beam_search(p, graph_search=False))
     assert abs(sol.state - limits[0]) <= 0.1
 
@@ -51,6 +49,6 @@ def test_simulated_annealing():
     initial = 0
     goal = 10
     limits = (-goal, goal)
-    p = AnnotatedProblem(TestProblem(initial, initial_cost=initial, extra=limits))
+    p = AnnotatedProblem(EasyProblem(initial, initial_cost=initial, extra=limits))
     sol = next(simulated_annealing(p))
     assert abs(sol.state - limits[0]) <= 0.1

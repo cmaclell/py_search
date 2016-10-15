@@ -10,7 +10,6 @@ from __future__ import division
 
 from py_search.base import LIFOQueue
 from py_search.base import FIFOQueue
-from py_search.base import PriorityQueue
 
 def tree_search(problem, fringe, depth_limit=float('inf')):
     """

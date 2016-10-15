@@ -75,13 +75,13 @@ class nQueens:
         representation). Then checks for diagonals. 
         """
         conflicts = 0
-        for r1, c1 in enumerate(self.state):
+        for r1 in range(len(self.state)):
+            c1 = self.state[r1]
             if c1 is None:
                 continue
-            for r2, c2 in enumerate(self.state):
+            for r2 in range(r1+1, len(self.state)):
+                c2 = self.state[r2]
                 if c2 is None:
-                    continue
-                if r2 <= r1:
                     continue
                 if c1 == c2:
                     conflicts += 1
@@ -209,6 +209,9 @@ if __name__ == "__main__":
     print(initial.num_conflicts())
     print()
 
+    def beam2(problem):
+        return local_beam_search(problem, beam_width=2, cost_limit=0)
+
     def steepest_hill(problem):
         return hill_climbing(problem, cost_limit=0)
 
@@ -216,19 +219,19 @@ if __name__ == "__main__":
         size = problem.initial.state.n
         n_neighbors = (size * (size-1)) // 2
         return simulated_annealing(problem, cost_limit=0,
-                                   initial_temp=0.8,
-                                   temp_length=n_neighbors // 2)
+                                   initial_temp=1.8,
+                                   temp_length=n_neighbors)
 
     def greedy_annealing(problem):
         size = problem.initial.state.n
         n_neighbors = (size * (size-1)) // 2
         return simulated_annealing(problem, cost_limit=0,
-                                   initial_temp=1e-2,
-                                   temp_length=n_neighbors // 2)
+                                   initial_temp=0,
+                                   temp_length=n_neighbors)
 
     compare_searches(problems=[LocalnQueensProblem(initial)],
                      searches=[best_first_search,
-                               beam_search,
+                               beam2,
                                steepest_hill,
                                greedy_annealing,
                                annealing])

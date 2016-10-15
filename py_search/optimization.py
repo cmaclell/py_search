@@ -113,8 +113,8 @@ def local_beam_search(problem, beam_width=1, graph_search=True,
         search (duplicates)
     :type graph_search: Boolean
     """
-    best = None
-    best_val = float('inf')
+    b = None
+    bv = float('inf')
 
     fringe = PriorityQueue(node_value=problem.node_value)
     fringe.push(problem.initial)
@@ -128,8 +128,9 @@ def local_beam_search(problem, beam_width=1, graph_search=True,
 
     while len(fringe) > 0:
         pv = fringe.peek_value()
-        if pv > best_val:
-            yield best
+
+        if pv > bv:
+            yield b
 
         parents = []
         while len(fringe) > 0 and len(parents) < beam_width:
@@ -137,23 +138,27 @@ def local_beam_search(problem, beam_width=1, graph_search=True,
             parents.append(parent)
         fringe.clear()
 
-        best = parents[0]
-        best_val = pv
-
-        if best_val <= cost_limit:
-            yield best
+        b = parents[0]
+        bv = pv
 
         for node in parents:
             for s in problem.successors(node):
+                added = True
                 if not graph_search:
                     fringe.push(s)
                 elif s not in closed:
                     fringe.push(s)
                     closed.add(s)
+                else:
+                    added = False
 
-    yield best
+                if added and fringe.peek_value() <= cost_limit:
+                    yield fringe.peek()
 
-def simulated_annealing(problem, temp_factor=0.95, temp_length=100,
+
+    yield b
+
+def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
                         initial_temp=None, init_prob=0.4, min_accept=0.02,
                         cost_limit=float('-inf'), limit=float('inf')):
     """
@@ -173,13 +178,15 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=100,
         1, but usually very close to 1. 
     :type temp_factor: float
     :param temp_length: The number of nodes to expand at each temperature.
-    Typically this is chosen to be some proportion of the number of neighbors
-    to each state (e.g., num_neighbors // 2). 
+    If set to None (the default) then it is automatically chosen to be equal to
+    the length of the successors list (i.e.,
+    len(list(problem.successors(initial)))).
     :type temp_length: int
     :param initial_temp: The initial temperature for the annealing. The number
         is objective function specific. If set to None (the default), then
-        temp_length random neighbors are sampled and used to select an initial
-        temperature that will yield approx. init_prob acceptance rate. 
+        a semi-random walk is used to select an initial
+        temperature that will yield approx. init_prob acceptance rate for
+        worse states.
     :type initial_temp: float or None
     :param min_accept: The fraction of states that must be accepted in
         temp_length iterations (taken from a single temperature) to not be
@@ -194,6 +201,7 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=100,
     before stopping. 
     :type limit: float
     """
+    T = initial_temp
     b = problem.initial
     bv = problem.node_value(b)
 
@@ -203,46 +211,54 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=100,
     c = b
     cv = bv
 
-    T = initial_temp
-    if T is None:
-        print("No initial temp specified.")
-        print("Sampling to determine temp with accept prob = %0.3f." % init_prob)
-        deltas = [problem.node_value(problem.random_successor(c)) - cv for i in
-                  range(temp_length)]
-        deltas = [d if d > 0 else 0 for d in deltas]
-        avg_delta = 1e-2 + sum(deltas) / len(deltas)
-        T = -avg_delta / log(init_prob)
-        print("Initial temperature set to: %0.3f" % T)
-
     frozen = 0
     iterations = 0
 
+    if temp_length is None:
+        temp_length = len(list(problem.successors(c)))
+        print("Temp length set equal to number of initial neighbors (%i)" %
+              temp_length)
+
+    if T is None:
+        delta_sum = 0
+        delta_count = 0
+
     while frozen < 5:
         acceptances = 0
-        for l in range(temp_length):
+
+        for i in range(temp_length):
+            iterations += 1
             s = problem.random_successor(c)
             sv = problem.node_value(s)
 
             if sv < bv:
                 b = s
                 bv = sv
-                if bv <= cost_limit:
-                    yield b
                 frozen = 0
 
+            if bv <= cost_limit or iterations >= limit:
+                yield b
+
             delta_e = sv - cv
-            if delta_e <= 0 or random() < exp(-delta_e/T):
+            if T is None and delta_e > 0:
+                delta_sum += delta_e
+                delta_count += 1
+            if (delta_e <= 0 or (T is None and random() < 0.5) or 
+                (T is not None and T > 1e-2 and random() < exp(-delta_e/T))):
                 acceptances += 1
                 c = s
                 cv = sv
 
-            iterations += 1
-            if iterations >= limit:
-                yield b
+        if T is None:
+            if delta_count > 100:
+                avg_delta = delta_sum / delta_count
+                T = -avg_delta / log(init_prob)
+                print("Initial temperature set to: %0.3f (based on %i samples)" %
+                      (T, delta_count))
+        else:
+            T = temp_factor * T
 
-        T = temp_factor * T
-
-        if acceptances / temp_length < min_accept:
+        if (acceptances / temp_length) < min_accept:
             frozen += 1
 
     yield b

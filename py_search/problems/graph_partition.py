@@ -121,13 +121,13 @@ if __name__ == "__main__":
 
     def annealing(problem):
         size = (n * (n//2)) // 2
-        return simulated_annealing(problem, #initial_temp=1.7, 
-                                   temp_length=size//2)
+        return simulated_annealing(problem, initial_temp=5.5, 
+                                   temp_length=size)
 
     def greedy_annealing(problem):
         size = (n * (n//2)) // 2
-        return simulated_annealing(problem, initial_temp=1e-2,
-                                    temp_length=size//2)
+        return simulated_annealing(problem, initial_temp=0,
+                                    temp_length=size)
 
     compare_searches(problems=[problem],
                      searches=[

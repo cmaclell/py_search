@@ -18,7 +18,7 @@ from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import beam_search
 from py_search.informed import widening_beam_search
 
-class TestProblem(Problem):
+class EasyProblem(Problem):
 
     def successors(self, node):
         yield Node(node.state+1, node, 'expand', node.path_cost+1, extra=node.extra)
@@ -27,7 +27,7 @@ class TestProblem(Problem):
     def goal_test(self, node):
         return node.state == node.extra
 
-class HeuristicTestProblem(Problem):
+class HeuristicEasyProblem(Problem):
 
     def node_value(self, node):
         return (node.extra - node.state)
@@ -44,7 +44,7 @@ def test_best_first_search_without_heuristic():
     Best first search without a heuristic is essentially breadth first.
     """
     for goal in range(1, 10):
-        p = AnnotatedProblem(TestProblem(0, extra=goal))
+        p = AnnotatedProblem(EasyProblem(0, extra=goal))
         sol = next(best_first_search(p, search=tree_search))
         assert sol.state == goal
         assert p.nodes_expanded == pow(2,goal+1)-2
@@ -55,7 +55,7 @@ def test_best_first_search_with_heuristic():
     Best heuristic is essentially depth first.
     """
     for goal in range(1, 10):
-        p = AnnotatedProblem(HeuristicTestProblem(0, extra=goal))
+        p = AnnotatedProblem(HeuristicEasyProblem(0, extra=goal))
         sol = next(best_first_search(p, search=tree_search))
         assert sol.state == goal
         assert p.nodes_expanded == goal*2 
@@ -67,7 +67,7 @@ def test_iterative_best_first_tree_search():
     until the heuristic is included, then search proceeds directly to the solution.
     """
     for goal in range(1,10):
-        p = AnnotatedProblem(HeuristicTestProblem(0, extra=goal))
+        p = AnnotatedProblem(HeuristicEasyProblem(0, extra=goal))
         sol = next(iterative_deepening_best_first_search(p, search=tree_search))
         assert sol.state == goal
         assert p.nodes_expanded == goal*2 
@@ -79,7 +79,7 @@ def test_iterative_deepening_best_first_search():
     (here is the case where we use graph search).
     """
     for goal in range(1,10):
-        p = AnnotatedProblem(TestProblem(0, extra=goal))
+        p = AnnotatedProblem(EasyProblem(0, extra=goal))
         sol = next(iterative_deepening_best_first_search(p, search=graph_search))
         assert sol.state == goal
         assert p.nodes_expanded == sum([i*2 for i in range(1,goal+2)])-2
@@ -90,7 +90,7 @@ def test_beam1_tree_search():
     Beam search with a width of 1 is like a depth first search, but with no backtracking.
     """
     for goal in range(1,10):
-        p = AnnotatedProblem(TestProblem(0, extra=goal))
+        p = AnnotatedProblem(EasyProblem(0, extra=goal))
         sol = next(beam_search(p, beam_width=1, graph_search=False))
         assert sol.state == goal
         assert p.nodes_expanded == goal*2
@@ -102,7 +102,7 @@ def test_beam2_tree_search():
     breadth and depth first searches. 
     """
     for goal in range(1,10):
-        p = AnnotatedProblem(TestProblem(0, extra=goal))
+        p = AnnotatedProblem(EasyProblem(0, extra=goal))
         sol = next(beam_search(p, beam_width=2, graph_search=False))
         assert sol.state == goal
         assert p.nodes_expanded == 2 + (goal-1)*4
@@ -113,7 +113,7 @@ def test_beam2_graph_search():
     like test_beam2_tree_search, but eliminates duplicate nodes
     """
     for goal in range(1,10):
-        p = AnnotatedProblem(TestProblem(0, extra=goal))
+        p = AnnotatedProblem(EasyProblem(0, extra=goal))
         sol = next(beam_search(p, beam_width=2, graph_search=True))
         assert sol.state == goal
         assert p.nodes_expanded == goal*2

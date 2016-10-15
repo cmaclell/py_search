@@ -48,12 +48,17 @@ Assignment Problem Optimization Example
        ...: 
        ...:     def local_beam_width2(problem):
        ...:         return local_beam_search(problem, beam_width=2)
-       ...:     def annealing_2000steps(problem):
-       ...:         return simulated_annealing(problem, limit=2000)
-       ...: 
+       ...:     def greedy_annealing(problem):
+       ...:         num_neighbors = (n * (n-1)) // 2
+       ...:         return simulated_annealing(problem, initial_temp=0,
+       ...:                                    temp_length=num_neighbors)
+       ...:     def annealing(problem):
+       ...:         num_neighbors = (n * (n-1)) // 2
+       ...:         return simulated_annealing(problem, initial_temp=1.5,
+       ...:                                    temp_length=num_neighbors)
        ...:     compare_searches(problems=[problem],
-       ...:                      searches=[hill_climbing ,local_beam_width2, 
-       ...:                                annealing_2000steps])
+       ...:                      searches=[hill_climbing, local_beam_width2, 
+       ...:                                annealing, greedy_annealing])
        ...: 
        ...:     print()
        ...:     print("###########################")

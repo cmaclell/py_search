@@ -319,6 +319,12 @@ class PriorityQueue(Fringe):
         """
         self.nodes = sortedlist()
 
+    def peek(self):
+        """
+        Returns the best node.
+        """
+        return self.nodes[0][1]
+
     def peek_value(self):
         """
         Returns the value of the best node.

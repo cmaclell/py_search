@@ -225,15 +225,13 @@ if __name__ == "__main__":
 
     def greedy_annealing(problem):
         num_neighbors = (n * (n-1)) // 2
-        print(num_neighbors)
-        return simulated_annealing(problem, initial_temp=1e-3,
-                                   temp_length=num_neighbors//2)
+        return simulated_annealing(problem, initial_temp=0,
+                                   temp_length=num_neighbors)
 
     def annealing(problem):
         num_neighbors = (n * (n-1)) // 2
-        print(num_neighbors)
         return simulated_annealing(problem, initial_temp=1.5,
-                                   temp_length=num_neighbors//2)
+                                   temp_length=num_neighbors)
 
     compare_searches(problems=[problem],
                      searches=[hill_climbing, 
