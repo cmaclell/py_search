@@ -19,3 +19,4 @@ convergence.
 v1.0.5, 11/15/16 -- Added limit on the number of sideways moves allowed in hill
 climbing and local beam. Also, added a min change amount that can impact the
 frozen counter for simulated annealing.
+v1.0.6, 11/15/16 -- Update default max sideways moves to 0

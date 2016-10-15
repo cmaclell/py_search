@@ -13,7 +13,7 @@ from random import random
 
 from py_search.base import PriorityQueue
 
-def hill_climbing(problem, random_restarts=0, max_sideways=100,
+def hill_climbing(problem, random_restarts=0, max_sideways=0,
                   graph_search=True, cost_limit=float('-inf')):
     """
     Probably the simplest optimization approach. It expands the list of
@@ -66,7 +66,7 @@ def hill_climbing(problem, random_restarts=0, max_sideways=100,
     while random_restarts >= 0:
         found_better = True
         sideways_moves = 0
-        while found_better and sideways_moves < max_sideways:
+        while found_better and sideways_moves <= max_sideways:
             found_better = False
             prev_cost = cv
             for s in problem.successors(c):
@@ -106,7 +106,7 @@ def hill_climbing(problem, random_restarts=0, max_sideways=100,
 
     yield b
 
-def local_beam_search(problem, beam_width=1, max_sideways=100,
+def local_beam_search(problem, beam_width=1, max_sideways=0,
                       graph_search=True, cost_limit=float('-inf')):
     """
     A variant of :func:`py_search.informed_search.beam_search` that can be
@@ -137,7 +137,7 @@ def local_beam_search(problem, beam_width=1, max_sideways=100,
         closed = set()
         closed.add(problem.initial)
 
-    while len(fringe) > 0 and sideways_moves < max_sideways:
+    while len(fringe) > 0 and sideways_moves <= max_sideways:
         pv = fringe.peek_value()
 
         if pv > bv:
