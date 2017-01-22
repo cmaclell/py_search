@@ -42,7 +42,8 @@ def compare_searches(problems, searches):
                           annotated_problem.nodes_expanded,
                           annotated_problem.nodes_evaluated, "%0.3f" % value if
                           isinstance(value, float) else value,
-                          "%0.4f" % elapsed])
+                          "%0.4f" % elapsed if isinstance(elapsed, float) else
+                         elapsed])
 
     print(tabulate(table, headers=['Problem', 'Search Alg', 'Goal Tests',
                                    'Nodes Expanded', 'Nodes Evaluated',
