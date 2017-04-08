@@ -1,6 +1,7 @@
 """
-This module contains the local search / optimization techniques. Instead of trying to
-find a goal state, these algorithms try to find the lowest cost state. 
+This module contains the local search / optimization techniques. Instead of
+trying to find a goal state, these algorithms try to find the lowest cost
+state.
 """
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -13,27 +14,99 @@ from random import random
 
 from py_search.base import PriorityQueue
 
+
+def branch_and_bound(problem, graph_search=True, depth_limit=float('inf'),
+                     cost_limit=float('-inf')):
+    """
+    An exhaustive optimization technique that is guranteed to give the best
+    solution. In general the algorithm starts with some (potentially
+    non-optimal) solution. Then it uses the cost of the current best solution
+    to prune branches of the search that do not have any chance of being better
+    than this solution (i.e., that have a node_value > current best cost).
+
+    In this implementation, node_value should provide an admissible lower bound
+    on the cost of solutions reachable from the provided node. If node_value is
+    inadmissible, then optimality guarantees are lost.
+
+    Also, if the search space is infinite and/or the node_value function
+    provides too little guidance (e.g., node_value = float('-inf')), then
+    the search might never terminate. To counter this, a depth_limit can be
+    provided that stops expanding nodes after the provided depth. This will
+    ensure the search is finite and guaranteed to terminate.
+
+    Finally, a cost_limit can be used to terminate search early if a good
+    enough solution has been found (i.e., if a solution is discovered that has
+    lower cost than the limit).
+
+    :param problem: The problem to solve.
+    :type problem: :class:`py_search.base.Problem`
+    :param graph_search: Whether to use graph search (no duplicates) or tree
+        search (duplicates)
+    :type graph_search: Boolean
+    :param cost_limit: A lower bound on the cost, if a node with value <=
+        cost_limit is found, then it is immediately returned. Default is -inf.
+    :type cost_limit: float
+    """
+    b = problem.initial
+    bv = b.cost()
+
+    if bv <= cost_limit:
+        yield b
+        return
+
+    fringe = PriorityQueue(node_value=problem.node_value, cost_limit=bv)
+    fringe.push(problem.initial)
+
+    if graph_search:
+        closed = set()
+        closed.add(problem.initial)
+
+    while len(fringe) > 0:
+        pv = fringe.peek_value()
+
+        if bv < pv:
+            break
+
+        node = fringe.pop()
+
+        if node.cost() < bv:
+            b = node
+            bv = node.cost()
+            if bv <= cost_limit:
+                break
+            fringe.update_cost_limit(bv)
+
+        if depth_limit == float('inf') or node.depth() < depth_limit:
+            for s in problem.successors(node):
+                if not graph_search or s not in closed:
+                    fringe.push(s)
+                    if graph_search:
+                        closed.add(s)
+
+    yield b
+
+
 def hill_climbing(problem, random_restarts=0, max_sideways=0,
                   graph_search=True, cost_limit=float('-inf')):
     """
     Probably the simplest optimization approach. It expands the list of
-    neighbors and chooses the best neighbor (steepest descent hill climbing). 
-    
+    neighbors and chooses the best neighbor (steepest descent hill climbing).
+
     Default configuration should yield similar behavior to
     :func:`local_beam_search` when it has a width of 1, but doesn't need to
     maintain alternatives, so might use slightly less memory (just stores the
-    best node instead of limited length priority queue). 
+    best node instead of limited length priority queue).
 
     If graph_search is true (the default), then a closed list is maintained.
     This is imporant for search spaces with platues because it keeps the
     algorithm from reexpanding neighbors with the same value and getting stuck
-    in a loop. 
+    in a loop.
 
     If random_restarts > 0, then search is restarted multiple times. This can
-    be useful for getting out of local minimums. 
+    be useful for getting out of local minimums.
 
     Cost_limit can be used to terminate search early if a good enough solution
-    has been found. 
+    has been found.
 
     :param problem: The problem to solve.
     :type problem: :class:`py_search.base.Problem`
@@ -41,7 +114,7 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
         initial state is used for the first search and subsequent starts begin
         at a random state.
     :type random_restarts: int
-    :param max_sideways: Specifies the max number of contiguous sideways moves. 
+    :param max_sideways: Specifies the max number of contiguous sideways moves.
     :type max_sideways: int
     :param graph_search: Whether to use graph search (no duplicates) or tree
         search (duplicates)
@@ -57,7 +130,7 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
         yield b
 
     if graph_search:
-        closed=set()
+        closed = set()
         closed.add(problem.initial)
 
     c = b
@@ -106,6 +179,7 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
 
     yield b
 
+
 def local_beam_search(problem, beam_width=1, max_sideways=0,
                       graph_search=True, cost_limit=float('-inf')):
     """
@@ -117,7 +191,7 @@ def local_beam_search(problem, beam_width=1, max_sideways=0,
     :type problem: :class:`py_search.base.Problem`
     :param beam_width: The size of the search beam.
     :type beam_width: int
-    :param max_sideways: Specifies the max number of contiguous sideways moves. 
+    :param max_sideways: Specifies the max number of contiguous sideways moves.
     :type max_sideways: int
     :param graph_search: Whether to use graph search (no duplicates) or tree
         search (duplicates)
@@ -132,7 +206,7 @@ def local_beam_search(problem, beam_width=1, max_sideways=0,
 
     while len(fringe) < beam_width:
         fringe.push(problem.random_node())
-    
+
     if graph_search:
         closed = set()
         closed.add(problem.initial)
@@ -171,8 +245,8 @@ def local_beam_search(problem, beam_width=1, max_sideways=0,
                 if added and fringe.peek_value() <= cost_limit:
                     yield fringe.peek()
 
-
     yield b
+
 
 def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
                         initial_temp=None, init_prob=0.4, min_accept=0.02,
@@ -181,8 +255,8 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
     """
     A more complicated optimization technique. At each iteration a random
     successor is expanded if it is better than the current node. If the random
-    successor is not better than the current node, then it is expanded with some
-    probability based on the temperature.
+    successor is not better than the current node, then it is expanded with
+    some probability based on the temperature.
 
     Used the formulation of simulated annealing found in:
         Johnson, D. S., Aragon, C. R., McGeoch, L. A., & Schevon, C. (1989).
@@ -192,7 +266,7 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
     :param problem: The problem to solve.
     :type problem: :class:`py_search.base.Problem`
     :param temp_factor: The factor for geometric cooling, a value between 0 and
-        1, but usually very close to 1. 
+        1, but usually very close to 1.
     :type temp_factor: float
     :param temp_length: The number of nodes to expand at each temperature. If
         set to `None` (the default) then it is automatically chosen to be equal
@@ -220,7 +294,7 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
         cost_limit is found, then it is immediately returned. Default is -inf.
     :type cost_limit: float
     :param limit: The maximum number of iterations (random neighbors) to expand
-        before stopping. 
+        before stopping.
     :type limit: float
     """
     T = initial_temp
@@ -266,8 +340,8 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
             if T is None and delta_e > 0:
                 delta_sum += delta_e
                 delta_count += 1
-            if (delta_e <= 0 or (T is None and random() < 0.5) or 
-                (T is not None and T > 1e-2 and random() < exp(-delta_e/T))):
+            if ((delta_e <= 0 or (T is None and random() < 0.5) or
+                 (T is not None and T > 1e-2 and random() < exp(-delta_e/T)))):
                 acceptances += 1
                 changes += delta_e
                 c = s
@@ -277,13 +351,13 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
             if delta_count > 100:
                 avg_delta = delta_sum / delta_count
                 T = -avg_delta / log(init_prob)
-                print("Initial temperature set to: %0.3f (based on %i samples)" %
-                      (T, delta_count))
+                print("Initial temperature set to:",
+                      "%0.3f (based on %i samples)" % (T, delta_count))
         else:
             T = temp_factor * T
 
-        if ((acceptances / temp_length) < min_accept or 
-            abs(changes) < min_change):
+        if (((acceptances / temp_length) < min_accept or
+             abs(changes) < min_change)):
             frozen += 1
 
     yield b

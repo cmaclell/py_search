@@ -331,11 +331,20 @@ class PriorityQueue(Fringe):
         """
         return self.nodes[0][0]
 
+    def update_cost_limit(self, cost_limit):
+        """
+        Updates the cost limit and removes any nodes that violate the new
+        limit.
+        """
+        self.cost_limit = cost_limit
+        while (len(self.nodes) > 0 and self.nodes[-1][0] > self.cost_limit):
+            self.nodes.pop()
+
     def push(self, node):
         """
         Push a node into the priority queue. If the node exceeds the cost limit
         then it is not added. If the max_length is exceeded by
-        adding the node, then the worst node is discarded from the set. 
+        adding the node, then the worst node is discarded from the set.
         """
         value = self.node_value(node)
 
@@ -356,4 +365,3 @@ class PriorityQueue(Fringe):
 
     def __len__(self):
         return len(self.nodes)
-
