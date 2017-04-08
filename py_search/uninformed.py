@@ -1,7 +1,8 @@
 """
-This module includes the core search methods :func:`tree_search` and `graph_search` and the
-primary uninformed search techniques: :func:`depth_first_search`,
-:func:`breadth_first_search`, and :func:`iterative_deepening_search`.
+This module includes the core search methods :func:`tree_search` and
+`graph_search` and the primary uninformed search techniques:
+:func:`depth_first_search`, :func:`breadth_first_search`, and
+:func:`iterative_deepening_search`.
 """
 from __future__ import print_function
 from __future__ import unicode_literals
@@ -10,6 +11,7 @@ from __future__ import division
 
 from py_search.base import LIFOQueue
 from py_search.base import FIFOQueue
+
 
 def tree_search(problem, fringe, depth_limit=float('inf')):
     """
@@ -35,13 +37,15 @@ def tree_search(problem, fringe, depth_limit=float('inf')):
         elif depth_limit == float('inf') or node.depth() < depth_limit:
             fringe.extend(problem.successors(node))
 
+
 def graph_search(problem, fringe, depth_limit=float('inf')):
     """
     Perform graph search (i.e., no duplicate states) using the given fringe
     class. Returns an iterator to the solutions, so more than one solution can
     be found.
 
-    Note that the closed list will allow re-expansion of nodes with a lower cost.
+    Note that the closed list will allow re-expansion of nodes with a lower
+    cost.
 
     :param problem: The problem to solve.
     :type problem: :class:`Problem`
@@ -81,7 +85,9 @@ def depth_first_search(problem, depth_limit=float('inf'), search=graph_search):
     for solution in search(problem, LIFOQueue(), depth_limit):
         yield solution
 
-def breadth_first_search(problem, depth_limit=float('inf'), search=graph_search):
+
+def breadth_first_search(problem, depth_limit=float('inf'),
+                         search=graph_search):
     """
     A simple implementation of depth-first search using a FIFO queue.
 
@@ -96,9 +102,10 @@ def breadth_first_search(problem, depth_limit=float('inf'), search=graph_search)
     for solution in search(problem, FIFOQueue(), depth_limit):
         yield solution
 
+
 def iterative_deepening_search(problem, search=graph_search,
-                               initial_depth_limit=0, depth_inc=1, 
-                               max_depth_limit=float('inf')): 
+                               initial_depth_limit=0, depth_inc=1,
+                               max_depth_limit=float('inf')):
     """
     An implementation of iterative deepening search. This search is basically
     depth-limited depth first up to the depth limit. If no solution is found at
@@ -113,7 +120,8 @@ def iterative_deepening_search(problem, search=graph_search,
     :type initial_depth_limit: int or float('inf')
     :param depth_inc: The amount to increase the depth limit after failure.
     :type depth_inc: int
-    :param max_depth_limit: The maximum depth limit (default value of `float('inf')`)
+    :param max_depth_limit: The maximum depth limit (default value of
+        `float('inf')`)
     :type max_depth_limit: int or float('inf')
     """
     depth_limit = initial_depth_limit

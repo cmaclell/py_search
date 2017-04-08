@@ -32,7 +32,7 @@ def compare_searches(problems, searches):
                 start_time = timeit.default_timer()
                 sol = next(search(annotated_problem))
                 elapsed = timeit.default_timer() - start_time
-                value = problem.node_value(sol)
+                cost = sol.cost()
             except StopIteration:
                 value = 'Failed'
                 elapsed = 'Failed'
@@ -40,8 +40,8 @@ def compare_searches(problems, searches):
             table.append([problem.__class__.__name__, search.__name__,
                           annotated_problem.goal_tests,
                           annotated_problem.nodes_expanded,
-                          annotated_problem.nodes_evaluated, "%0.3f" % value if
-                          isinstance(value, float) else value,
+                          annotated_problem.nodes_evaluated, "%0.3f" % cost if
+                          isinstance(cost, float) else cost,
                           "%0.4f" % elapsed if isinstance(elapsed, float) else
                          elapsed])
 

@@ -14,14 +14,15 @@ from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import widening_beam_search
 from py_search.utils import compare_searches
 
+
 class EightPuzzle:
     """
     An eight puzzle class that can be used to test different search algorithms.
-    When first created the puzzle is in the solved state. 
+    When first created the puzzle is in the solved state.
     """
 
     def __init__(self):
-        self.state = (0,1,2,3,4,5,6,7,8)
+        self.state = (0, 1, 2, 3, 4, 5, 6, 7, 8)
 
     def __hash__(self):
         return hash(self.state)
@@ -57,12 +58,12 @@ class EightPuzzle:
         Randomizes an EightPuzzle by executing a random action `num_suffles`
         times.
         """
-        state = [0,1,2,3,4,5,6,7,8]
+        state = [0, 1, 2, 3, 4, 5, 6, 7, 8]
         self.state = tuple(state)
 
         for i in range(num_shuffles):
             self.executeAction(choice([a for a in self.legalActions()]))
- 
+
     def executeAction(self, action):
         """
         Executes an action to the EightPuzzle object.
@@ -95,20 +96,21 @@ class EightPuzzle:
         """
         zeroIndex = self.state.index(0)
 
-        if zeroIndex in set([0,1,2,3,4,5]):
+        if zeroIndex in set([0, 1, 2, 3, 4, 5]):
             yield "up"
-        if zeroIndex in set([0,3,6,1,4,7]):
+        if zeroIndex in set([0, 3, 6, 1, 4, 7]):
             yield "left"
-        if zeroIndex in set([2,5,8,1,4,7]):
+        if zeroIndex in set([2, 5, 8, 1, 4, 7]):
             yield "right"
-        if zeroIndex in set([3,4,5,6,7,8]):
+        if zeroIndex in set([3, 4, 5, 6, 7, 8]):
             yield "down"
+
 
 class EightPuzzleProblem(Problem):
     """
     This class wraps around an Eight Puzzle object and instantiates the
-    successor and goal test functions necessary for conducting search. 
-    
+    successor and goal test functions necessary for conducting search.
+
     This class also implements an heuristic function which is used to compute
     the value for each successor as cost to node + heuristic estimate of
     distance to goal. This yield A* search when used with best first search or
@@ -121,7 +123,7 @@ class EightPuzzleProblem(Problem):
         """
         goal = EightPuzzle()
         h = 0
-        for i,v in enumerate(state.state):
+        for i, v in enumerate(state.state):
             if state.state[i] != goal.state[i]:
                 h += 1
         return h
@@ -150,6 +152,7 @@ class EightPuzzleProblem(Problem):
         goal = EightPuzzle()
         return node.state == goal
 
+
 class NoHeuristic(EightPuzzleProblem):
     """
     A variation on the Eight Puzzle Problem that has a heuristic for 0. This
@@ -159,6 +162,7 @@ class NoHeuristic(EightPuzzleProblem):
 
     def node_value(self, node):
         return node.cost()
+
 
 if __name__ == "__main__":
 

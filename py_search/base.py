@@ -1,12 +1,11 @@
-""" 
-This module contains the data_structures used in py_search. In
-particular, it contains the the :class:`Problem` class, which is used to represent
-the different search problems, and the :class:`AnnotatedProblem` class, which wraps 
-around a specific problem and keeps track of the number of core method
-calls. 
+"""
+This module contains the data_structures used in py_search. In particular, it
+contains the the :class:`Problem` class, which is used to represent the
+different search problems, and the :class:`AnnotatedProblem` class, which wraps
+around a specific problem and keeps track of the number of core method calls.
 
-At a lower level this module also contains the :class:`Node` class, which is used
-to represent a node in the search space. 
+At a lower level this module also contains the :class:`Node` class, which is
+used to represent a node in the search space.
 
 Finally, the module contains the :class:`Fringe` class, and its instantiations
 (:class:`FIFOQueue`, :class:`LIFOQueue`, and :class:`PrioritySet`). A Fringe is
@@ -19,6 +18,7 @@ from __future__ import division
 
 from collections import deque
 from blist import sortedlist
+
 
 class Problem(object):
     """
@@ -33,7 +33,7 @@ class Problem(object):
     def node_value(self, node):
         """
         Returns the the value of the current node. This is the value being
-        minimized by the search. By default the path_cost is used, but this
+        minimized by the search. By default the cost is used, but this
         function can be overloaded to include a heuristic.
         """
         return node.cost()
@@ -47,13 +47,13 @@ class Problem(object):
     def random_successor(self, node):
         """
         This method should return a single successor node. This is used
-        by some of the local search / optimization techniques. 
+        by some of the local search / optimization techniques.
         """
         raise NotImplemented("No random successor implemented!")
 
     def random_node(self):
         """
-        This method returns a random node in the search space. This 
+        This method returns a random node in the search space. This
         is used by some of the local search / optimization techniques.
         """
         raise NotImplemented("No random node implemented!")
@@ -64,6 +64,7 @@ class Problem(object):
         by the local search / optimization techniques.
         """
         raise NotImplemented("No goal test function implemented")
+
 
 class AnnotatedProblem(Problem):
     """
@@ -116,11 +117,12 @@ class AnnotatedProblem(Problem):
         self.goal_tests += 1
         return self.problem.goal_test(node)
 
+
 class Node(object):
     """
     A class to represent a node in the search. This node stores state
-    information, path to the state, cost to reach the node, depth of the node,
-    and any extra information.
+    information, path to the state, cost of the node, depth of the node, and
+    any extra information.
 
     :param state: the state at this node
     :type state: object for tree search and hashable object for graph search
@@ -128,19 +130,18 @@ class Node(object):
     :type parent: :class:`Node`
     :param action: the action performed to transition from parent to current.
     :type action: typically a string, but can be any object
-    :param path_cost: the cost of reaching the current node
-    :type path_cost: float
+    :param cost: the cost of reaching the current node
+    :type cost: float
     :param extra: extra information to store in this node, typically used to
                   store non-hashable information about the state.
     :type extra: object
     """
-    
-    def __init__(self, state, parent=None, action=None, path_cost=0,
+    def __init__(self, state, parent=None, action=None, node_cost=0,
                  extra=None):
         self.state = state
         self.parent = parent
         self.action = action
-        self.path_cost = path_cost
+        self.node_cost = node_cost
         self.extra = extra
 
     def depth(self):
@@ -157,9 +158,9 @@ class Node(object):
 
     def cost(self):
         """
-        Returns the cost of the current node. 
+        Returns the cost of the current node.
         """
-        return self.path_cost
+        return self.node_cost
 
     def path(self):
         """
@@ -189,7 +190,8 @@ class Node(object):
         return not self.__eq__(other)
 
     def __lt__(self, other):
-        return self.path_cost < other.path_cost
+        return self.node_cost < other.node_cost
+
 
 class Fringe(object):
     """
@@ -218,6 +220,7 @@ class Fringe(object):
 
     def __len__(self):
         raise NotImplemented("No len method")
+
 
 class FIFOQueue(Fringe):
     """
@@ -251,6 +254,7 @@ class FIFOQueue(Fringe):
     def __len__(self):
         return len(self.nodes)
 
+
 class LIFOQueue(FIFOQueue):
     """
     A last-in-first-out queue. Used to get depth first search behavior.
@@ -270,15 +274,15 @@ class LIFOQueue(FIFOQueue):
     def pop(self):
         return self.nodes.pop()
 
+
 class PriorityQueue(Fringe):
-    """ 
-    A priority set that sorts elements by their value. Always returns the
-    minimum value item. When a duplicate node is added the one with the minimum
-    value is kept. A :class:`PrioritySet` accepts a node_value function, a
-    cost_limit (nodes with a value greater than this limit will not be added)
-    and a max_length parameter. If adding an item ever causes the size to
-    exceed the max_length then the worst nodes are removed until the list is
-    equal to max_length.
+    """
+    A priority queue that sorts elements by their value. Always returns the
+    minimum value item.  A :class:`PriorityQueue` accepts a node_value
+    function, a cost_limit (nodes with a value greater than this limit will not
+    be added) and a max_length parameter. If adding an item ever causes the
+    size to exceed the max_length then the worst nodes are removed until the
+    list is equal to max_length.
 
     >>> pq = PriorityQueue(node_value=lambda x: x, max_length=3)
     >>> pq.push(6)
@@ -295,7 +299,7 @@ class PriorityQueue(Fringe):
     >>> print(pq.pop())
     6
 
-    :param node_value: The node evaluation function (defaults to 
+    :param node_value: The node evaluation function (defaults to
         ``lambda x: x.cost()``)
     :type node_value: a function with one parameter for node
     :param cost_limit: the maximum value for elements in the set, if an item

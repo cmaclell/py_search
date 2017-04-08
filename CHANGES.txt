@@ -21,3 +21,8 @@ climbing and local beam. Also, added a min change amount that can impact the
 frozen counter for simulated annealing.
 v1.0.6, 11/15/16 -- Update default max sideways moves to 0
 v1.0.7, 1/22/17 -- Updated compare to also provide runtime
+v1.1.0, 4/8/17 -- Added branch and bound algorithm to optimization. Updated
+nodes to have node_cost instead of path_cost. Updated optimization algs to use
+node.cost() instead of problem.node_value(node), except for branch and bound,
+which uses node_value as an optimistic estimate of all nodes reachable from the
+node.

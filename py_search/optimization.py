@@ -15,8 +15,7 @@ from random import random
 from py_search.base import PriorityQueue
 
 
-def branch_and_bound(problem, graph_search=True, depth_limit=float('inf'),
-                     cost_limit=float('-inf')):
+def branch_and_bound(problem, graph_search=True, depth_limit=float('inf')):
     """
     An exhaustive optimization technique that is guranteed to give the best
     solution. In general the algorithm starts with some (potentially
@@ -34,27 +33,23 @@ def branch_and_bound(problem, graph_search=True, depth_limit=float('inf'),
     provided that stops expanding nodes after the provided depth. This will
     ensure the search is finite and guaranteed to terminate.
 
-    Finally, a cost_limit can be used to terminate search early if a good
-    enough solution has been found (i.e., if a solution is discovered that has
-    lower cost than the limit).
+    Finally, the problem.goal_test function can be used to terminate search
+    early if a good enough solution has been found. If goal_test(node) return
+    True, then search is immediately terminated and the node is returned.
+
+    Note, the current implementation uses best-first search via a priority
+    queue data structure.
 
     :param problem: The problem to solve.
     :type problem: :class:`py_search.base.Problem`
     :param graph_search: Whether to use graph search (no duplicates) or tree
         search (duplicates)
     :type graph_search: Boolean
-    :param cost_limit: A lower bound on the cost, if a node with value <=
-        cost_limit is found, then it is immediately returned. Default is -inf.
-    :type cost_limit: float
     """
-    b = problem.initial
-    bv = b.cost()
+    b = None
+    bv = float('inf')
 
-    if bv <= cost_limit:
-        yield b
-        return
-
-    fringe = PriorityQueue(node_value=problem.node_value, cost_limit=bv)
+    fringe = PriorityQueue(node_value=problem.node_value)
     fringe.push(problem.initial)
 
     if graph_search:
@@ -69,25 +64,28 @@ def branch_and_bound(problem, graph_search=True, depth_limit=float('inf'),
 
         node = fringe.pop()
 
+        if problem.goal_test(node):
+            yield node
+            return
+
         if node.cost() < bv:
             b = node
             bv = node.cost()
-            if bv <= cost_limit:
-                break
             fringe.update_cost_limit(bv)
 
         if depth_limit == float('inf') or node.depth() < depth_limit:
             for s in problem.successors(node):
-                if not graph_search or s not in closed:
+                if not graph_search:
                     fringe.push(s)
-                    if graph_search:
-                        closed.add(s)
+                elif s not in closed:
+                    fringe.push(s)
+                    closed.add(s)
 
     yield b
 
 
 def hill_climbing(problem, random_restarts=0, max_sideways=0,
-                  graph_search=True, cost_limit=float('-inf')):
+                  graph_search=True):
     """
     Probably the simplest optimization approach. It expands the list of
     neighbors and chooses the best neighbor (steepest descent hill climbing).
@@ -105,8 +103,9 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
     If random_restarts > 0, then search is restarted multiple times. This can
     be useful for getting out of local minimums.
 
-    Cost_limit can be used to terminate search early if a good enough solution
-    has been found.
+    The problem.goal_test function can be used to terminate search early if a
+    good enough solution has been found. If goal_test(node) return True, then
+    search is immediately terminated and the node is returned.
 
     :param problem: The problem to solve.
     :type problem: :class:`py_search.base.Problem`
@@ -119,14 +118,11 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
     :param graph_search: Whether to use graph search (no duplicates) or tree
         search (duplicates)
     :type graph_search: Boolean
-    :param cost_limit: A lower bound on the cost, if a node with value <=
-        cost_limit is found, then it is immediately returned. Default is -inf.
-    :type cost_limit: float
     """
     b = problem.initial
-    bv = problem.node_value(b)
+    bv = b.cost()
 
-    if bv <= cost_limit:
+    if problem.goal_test(b):
         yield b
 
     if graph_search:
@@ -147,11 +143,11 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
                     continue
                 elif graph_search:
                     closed.add(s)
-                sv = problem.node_value(s)
+                sv = s.cost()
                 if sv <= bv:
                     b = s
                     bv = sv
-                    if bv <= cost_limit:
+                    if problem.goal_test(b):
                         yield b
                 if sv <= cv:
                     c = s
@@ -167,25 +163,29 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
             c = problem.random_node()
             while graph_search and c in closed:
                 c = problem.random_node()
-            cv = problem.node_value(c)
+            cv = c.cost()
 
             if graph_search:
                 closed.add(c)
             if cv <= bv:
                 b = c
                 bv = cv
-                if bv <= cost_limit:
+                if problem.goal_test(b):
                     yield b
 
     yield b
 
 
 def local_beam_search(problem, beam_width=1, max_sideways=0,
-                      graph_search=True, cost_limit=float('-inf')):
+                      graph_search=True):
     """
     A variant of :func:`py_search.informed_search.beam_search` that can be
     applied to local search problems.  When the beam width of 1 this approach
     yields behavior similar to :func:`hill_climbing`.
+
+    The problem.goal_test function can be used to terminate search early if a
+    good enough solution has been found. If goal_test(node) return True, then
+    search is immediately terminated and the node is returned.
 
     :param problem: The problem to solve.
     :type problem: :class:`py_search.base.Problem`
@@ -201,7 +201,7 @@ def local_beam_search(problem, beam_width=1, max_sideways=0,
     bv = float('inf')
     sideways_moves = 0
 
-    fringe = PriorityQueue(node_value=problem.node_value)
+    fringe = PriorityQueue()
     fringe.push(problem.initial)
 
     while len(fringe) < beam_width:
@@ -214,7 +214,7 @@ def local_beam_search(problem, beam_width=1, max_sideways=0,
     while len(fringe) > 0 and sideways_moves <= max_sideways:
         pv = fringe.peek_value()
 
-        if pv > bv:
+        if bv < pv:
             yield b
 
         if pv == bv:
@@ -232,26 +232,22 @@ def local_beam_search(problem, beam_width=1, max_sideways=0,
         bv = pv
 
         for node in parents:
+            if problem.goal_test(node):
+                yield node
+
             for s in problem.successors(node):
-                added = True
                 if not graph_search:
                     fringe.push(s)
                 elif s not in closed:
                     fringe.push(s)
                     closed.add(s)
-                else:
-                    added = False
-
-                if added and fringe.peek_value() <= cost_limit:
-                    yield fringe.peek()
 
     yield b
 
 
 def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
                         initial_temp=None, init_prob=0.4, min_accept=0.02,
-                        min_change=1e-6, cost_limit=float('-inf'),
-                        limit=float('inf')):
+                        min_change=1e-6, limit=float('inf')):
     """
     A more complicated optimization technique. At each iteration a random
     successor is expanded if it is better than the current node. If the random
@@ -262,6 +258,10 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
         Johnson, D. S., Aragon, C. R., McGeoch, L. A., & Schevon, C. (1989).
         Optimization by simulated annealing: an experimental evaluation; part
         I, graph partitioning. Operations research, 37(6), 865-892.
+
+    Also, the problem.goal_test function can be used to terminate search early
+    if a good enough solution has been found. If goal_test(node) return True,
+    then search is immediately terminated and the node is returned.
 
     :param problem: The problem to solve.
     :type problem: :class:`py_search.base.Problem`
@@ -290,18 +290,15 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
         incremented until it hits 5. If a better state is found, then the
         frozen counter is reset to 0.
     :type min_change: float
-    :param cost_limit: A lower bound on the cost, if a node with value <=
-        cost_limit is found, then it is immediately returned. Default is -inf.
-    :type cost_limit: float
     :param limit: The maximum number of iterations (random neighbors) to expand
         before stopping.
     :type limit: float
     """
     T = initial_temp
     b = problem.initial
-    bv = problem.node_value(b)
+    bv = b.cost()
 
-    if bv <= cost_limit:
+    if problem.goal_test(b):
         yield b
 
     c = b
@@ -326,14 +323,14 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
         for i in range(temp_length):
             iterations += 1
             s = problem.random_successor(c)
-            sv = problem.node_value(s)
+            sv = s.cost()
 
             if sv < bv:
                 b = s
                 bv = sv
                 frozen = 0
 
-            if bv <= cost_limit or iterations >= limit:
+            if iterations >= limit:
                 yield b
 
             delta_e = sv - cv
@@ -346,6 +343,9 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
                 changes += delta_e
                 c = s
                 cv = sv
+
+                if problem.goal_test(c):
+                    yield c
 
         if T is None:
             if delta_count > 100:

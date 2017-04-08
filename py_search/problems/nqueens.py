@@ -15,8 +15,9 @@ from py_search.informed import beam_search
 from py_search.optimization import hill_climbing
 from py_search.optimization import local_beam_search
 from py_search.optimization import simulated_annealing
-
+from py_search.optimization import branch_and_bound
 from py_search.utils import compare_searches
+
 
 class nQueens:
     """
@@ -47,8 +48,9 @@ class nQueens:
             if c is None:
                 output += "|" + "|".join([" " for i in range(self.n)]) + "|\n"
             else:
-                 
-                output += "|" + "|".join([" " for i in range(c)] + ["Q"] + [" " for i in range(self.n-c-1)]) + "|\n"
+                output += ("|" + "|".join([" " for i in range(c)] + ["Q"] +
+                                          [" " for i in range(self.n-c-1)]) +
+                           "|\n")
         return output
 
     def copy(self):
@@ -72,7 +74,7 @@ class nQueens:
         """
         Returns a count of the number of conflicts. First checks if there are
         column conflicts (row conflicts are impossible because of
-        representation). Then checks for diagonals. 
+        representation). Then checks for diagonals.
         """
         conflicts = 0
         for r1 in range(len(self.state)):
@@ -89,10 +91,11 @@ class nQueens:
                     conflicts += 1
         return conflicts
 
+
 class nQueensProblem(Problem):
     """
     A class that wraps around the nQueens object. This version of the problem
-    starts with an empty board and then progressively adds queens. 
+    starts with an empty board and then progressively adds queens.
     """
     def node_value(self, node):
         """
@@ -104,7 +107,8 @@ class nQueensProblem(Problem):
         """
         Generate all possible next queen states.
         """
-        free_columns = set([i for i in range(node.state.n)]) - set(node.state.state)
+        free_columns = (set([i for i in range(node.state.n)]) -
+                        set(node.state.state))
 
         for row, col in enumerate(node.state.state):
             if col is None:
@@ -123,13 +127,14 @@ class nQueensProblem(Problem):
         return (len(set(node.state.state) - set([None])) == node.state.n and
                 node.state.num_conflicts() == 0)
 
+
 class LocalnQueensProblem(Problem):
     """
     A class that wraps around the nQueens object. This version of the problem
-    starts with an empty board and then progressively adds queens. 
+    starts with an empty board and then progressively adds queens.
     """
     def node_value(self, node):
-        return node.state.num_conflicts()
+        return float('-inf')
 
     def successors(self, node):
         """
@@ -146,12 +151,14 @@ class LocalnQueensProblem(Problem):
                 ns[r1] = c2
                 ns[r2] = c1
                 new_state.state = tuple(ns)
-                yield Node(new_state, node, ('swap', (r1,c1), (r2,c2)))
+                cost = new_state.num_conflicts()
+                yield Node(new_state, node, ('swap', (r1, c1), (r2, c2)), cost)
 
     def random_node(self):
         nq_state = self.initial.state.copy()
         nq_state.randomize()
-        return Node(nq_state, None, None)
+        cost = nq_state.num_conflicts()
+        return Node(nq_state, None, None, cost)
 
     def random_successor(self, node):
         """
@@ -170,14 +177,15 @@ class LocalnQueensProblem(Problem):
         ns[r1] = c2
         ns[r2] = c1
         new_state.state = tuple(ns)
-        return Node(new_state, node, ('swap', (r1,c1), (r2,c2)))
+        cost = new_state.num_conflicts()
+        return Node(new_state, node, ('swap', (r1, c1), (r2, c2)), cost)
 
     def goal_test(self, node):
         """
         Check if the goal state (i.e., no queen conflicts) has been reached.
         """
-        return (len(set(node.state.state) - set([None])) == node.state.n and
-                node.state.num_conflicts() == 0)
+        return node.cost() == 0
+
 
 if __name__ == "__main__":
 
@@ -204,33 +212,34 @@ if __name__ == "__main__":
 
     initial = nQueens(10)
     initial.randomize()
+    cost = initial.num_conflicts()
     print("Random %i-Queens Problem" % initial.n)
     print(initial)
-    print(initial.num_conflicts())
+    print(cost)
     print()
 
     def beam2(problem):
-        return local_beam_search(problem, beam_width=2, cost_limit=0)
+        return local_beam_search(problem, beam_width=2)
 
     def steepest_hill(problem):
-        return hill_climbing(problem, cost_limit=0)
+        return hill_climbing(problem)
 
     def annealing(problem):
         size = problem.initial.state.n
         n_neighbors = (size * (size-1)) // 2
-        return simulated_annealing(problem, cost_limit=0,
-                                   initial_temp=1.8,
+        return simulated_annealing(problem, initial_temp=1.8,
                                    temp_length=n_neighbors)
 
     def greedy_annealing(problem):
         size = problem.initial.state.n
         n_neighbors = (size * (size-1)) // 2
-        return simulated_annealing(problem, cost_limit=0,
-                                   initial_temp=0,
+        return simulated_annealing(problem, initial_temp=0,
                                    temp_length=n_neighbors)
 
-    compare_searches(problems=[LocalnQueensProblem(initial)],
+    compare_searches(problems=[LocalnQueensProblem(initial,
+                                                   initial_cost=cost)],
                      searches=[best_first_search,
+                               branch_and_bound,
                                beam2,
                                steepest_hill,
                                greedy_annealing,
@@ -239,12 +248,14 @@ if __name__ == "__main__":
 
     initial = nQueens(50)
     initial.randomize()
+    cost = initial.num_conflicts()
     print("Random %i-Queens Problem" % initial.n)
     print(initial)
-    print(initial.num_conflicts())
+    print(cost)
     print()
 
-    compare_searches(problems=[LocalnQueensProblem(initial)],
+    compare_searches(problems=[LocalnQueensProblem(initial,
+                                                   initial_cost=cost)],
                      searches=[steepest_hill,
                                greedy_annealing,
                                annealing])
