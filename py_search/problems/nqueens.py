@@ -101,7 +101,11 @@ class nQueensProblem(Problem):
         """
         The function used to compute the value of a node.
         """
-        return node.state.num_conflicts()
+        if node.state.num_conflicts() > 0:
+            return float('inf')
+
+        num_remaining = len(set(node.state.state) - set([None])) - node.state.n
+        return node.depth() + num_remaining
 
     def successors(self, node):
         """
@@ -118,7 +122,7 @@ class nQueensProblem(Problem):
                     ns[row] = nc
                     new_state.state = tuple(ns)
                     yield Node(new_state, node, ('add-queen', row, nc),
-                               node.cost()+1)
+                               new_state.num_conflicts())
 
     def goal_test(self, node):
         """
@@ -133,9 +137,6 @@ class LocalnQueensProblem(Problem):
     A class that wraps around the nQueens object. This version of the problem
     starts with an empty board and then progressively adds queens.
     """
-    def node_value(self, node):
-        return float('-inf')
-
     def successors(self, node):
         """
         Generate all permutations of rows.
