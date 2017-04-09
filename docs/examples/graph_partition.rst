@@ -16,14 +16,16 @@ Graph Partition Optimization Example
        ...:     print(n, p)
        ...:     V, E = generate_graph(n, p)
        ...:     initial = random_partition(V)
+       ...:     cost = cutsize(E, initial)
        ...:
        ...:     print("######################################")
        ...:     print("Local Search / Optimization Techniques")
        ...:     print("######################################")
        ...:
-       ...:     problem = LocalGraphPartitionProblem(initial, extra=(V,E)) 
+       ...:     problem = LocalGraphPartitionProblem(initial, initial_cost=cost,
+       ...:                                          extra=(V,E)) 
        ...:     print("Initial Partition Cost:")
-       ...:     print(cutsize(E, initial))
+       ...:     print(cost)
        ...:     print()
        ...:
        ...:     def annealing(problem):
