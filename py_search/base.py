@@ -17,7 +17,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from collections import deque
-from blist import sortedlist
+from bisect import insort
 
 
 class Problem(object):
@@ -312,28 +312,28 @@ class PriorityQueue(Fringe):
     """
     def __init__(self, node_value=lambda x: x.cost(), cost_limit=float('inf'),
                  max_length=float('inf')):
-        self.nodes = sortedlist()
+        self.nodes = []
         self.max_length = max_length
         self.cost_limit = cost_limit
         self.node_value = node_value
 
     def clear(self):
         """
-        Empties the sorted list.
+        Empties the list.
         """
-        self.nodes = sortedlist()
+        self.nodes = []
 
     def peek(self):
         """
         Returns the best node.
         """
-        return self.nodes[0][1]
+        return self.nodes[-1][1]
 
     def peek_value(self):
         """
         Returns the value of the best node.
         """
-        return self.nodes[0][0]
+        return -self.nodes[-1][0]
 
     def update_cost_limit(self, cost_limit):
         """
@@ -341,8 +341,10 @@ class PriorityQueue(Fringe):
         limit.
         """
         self.cost_limit = cost_limit
-        while (len(self.nodes) > 0 and self.nodes[-1][0] > self.cost_limit):
-            self.nodes.pop()
+        for i in range(len(self.nodes)):
+            if self.nodes[i][0] <= self.cost_limit:
+                self.nodes = self.nodes[i:]
+                break
 
     def push(self, node):
         """
@@ -355,16 +357,16 @@ class PriorityQueue(Fringe):
         if value > self.cost_limit:
             return
 
-        self.nodes.add((value, node))
+        insort(self.nodes, (-value, node))
 
         if len(self.nodes) > self.max_length:
-            val, node = self.nodes.pop()
+            val, node = self.nodes.pop(0)
 
     def pop(self):
         """
         Pop the best value from the priority queue.
         """
-        val, node = self.nodes.pop(0)
+        val, node = self.nodes.pop()
         return node
 
     def __len__(self):
