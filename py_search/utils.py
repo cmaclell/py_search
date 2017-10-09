@@ -34,7 +34,7 @@ def compare_searches(problems, searches):
                 elapsed = timeit.default_timer() - start_time
                 cost = sol.cost()
             except StopIteration:
-                value = 'Failed'
+                cost = 'Failed'
                 elapsed = 'Failed'
 
             table.append([problem.__class__.__name__, search.__name__,
