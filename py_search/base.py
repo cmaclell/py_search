@@ -17,6 +17,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from collections import deque
+from random import choice
 from bisect import insort
 
 
@@ -26,9 +27,9 @@ class Problem(object):
     successors and goal_test. Some search techniques also require the
     random_successor and predecessors methods to be implemented.
     """
-    def __init__(self, initial, parent=None, action=None, initial_cost=0,
-                 extra=None):
-        self.initial = Node(initial, parent, action, initial_cost, extra=extra)
+    def __init__(self, initial, goal=None, initial_cost=0, extra=None):
+        self.initial = Node(initial, None, None, initial_cost, extra=extra)
+        self.goal = Node(goal)
 
     def node_value(self, node):
         """
@@ -37,6 +38,12 @@ class Problem(object):
         function can be overloaded to include a heuristic.
         """
         return node.cost()
+
+    def predecessors(self, node):
+        """
+        An iterator that yields all of the predecessors of the current goal.
+        """
+        raise NotImplemented("No predecessors function implemented")
 
     def successors(self, node):
         """
@@ -47,23 +54,35 @@ class Problem(object):
     def random_successor(self, node):
         """
         This method should return a single successor node. This is used
-        by some of the local search / optimization techniques.
+        by some of the search techniques. By default, this just computes all of
+        the successors and randomly samples one. This default approach is not
+        very efficient, but this funciton can be overridden to generate a
+        single successor more efficiently.
         """
-        raise NotImplemented("No random successor implemented!")
+        return choice([s for s in self.successors(node)])
 
     def random_node(self):
         """
         This method returns a random node in the search space. This
-        is used by some of the local search / optimization techniques.
+        is used by some of the local search / optimization techniques to
+        randomly restart search.
         """
         raise NotImplemented("No random node implemented!")
+
+    def state_goal_test(self, node, goal):
+        """
+        Returns true if the given node and goal match. This is used primarily
+        in bidirecitonal search, which compares nodes in the fringes.
+        """
+        return node.state == goal.state
 
     def goal_test(self, node):
         """
         Returns true if a goal state is found. This is typically used not used
-        by the local search / optimization techniques.
+        by the local search / optimization techniques. By default, this checks
+        if the state equals the goal.
         """
-        raise NotImplemented("No goal test function implemented")
+        return node.state == self.goal.state
 
 
 class AnnotatedProblem(Problem):
@@ -74,6 +93,7 @@ class AnnotatedProblem(Problem):
     def __init__(self, problem):
         self.problem = problem
         self.initial = problem.initial
+        self.goal = problem.goal
         self.nodes_expanded = 0
         self.goal_tests = 0
         self.nodes_evaluated = 0
@@ -100,6 +120,15 @@ class AnnotatedProblem(Problem):
         self.nodes_evaluated += 1
         return self.problem.node_value(node)
 
+    def predecessors(self, node):
+        """
+        A wrapper for the predecessors method that keeps track of the number of
+        nodes expanded.
+        """
+        for s in self.problem.predecessors(node):
+            self.nodes_expanded += 1
+            yield s
+
     def successors(self, node):
         """
         A wrapper for the successor method that keeps track of the number of
@@ -108,6 +137,14 @@ class AnnotatedProblem(Problem):
         for s in self.problem.successors(node):
             self.nodes_expanded += 1
             yield s
+
+    def state_goal_test(self, node, goal):
+        """
+        A wrapper for the state_goal_test method that keeps track of the number
+        of goal_tests performed.
+        """
+        self.goal_tests += 1
+        return self.problem.state_goal_test(node, goal)
 
     def goal_test(self, node):
         """
