@@ -132,13 +132,13 @@ def iterative_deepening_search(problem, search=graph_search,
         depth_limit += depth_inc
 
 
-def iterative_sampling(problem, num_samples=float('inf'),
+def iterative_sampling(problem, max_samples=float('inf'),
                        depth_limit=float('inf')):
     """
     A non-systematic alternative to depth-first search. This samples paths
     through the tree until a dead end or until the depth limit is reached. It
     has much lower memory requirements than depth-first or breadth-first
-    search, but requires the user to specify num_samples and depth_limit
+    search, but requires the user to specify max_samples and depth_limit
     parameters. The search will return non-optimal paths (it does not evaluate
     node values) and sometimes it may fail to find solutions if the number of
     samples or depth limit is too low.
@@ -160,15 +160,16 @@ def iterative_sampling(problem, num_samples=float('inf'),
     :type problem: :class:`Problem`
     :param search: A search algorithm to use (defaults to graph_search).
     :type search: :func:`graph_search` or :func`tree_search`
-    :param num_samples: The number of samples through the search tree. If no
-        solution is found after collecting this many samples, then the search
-        fails.
-    :type num_samples: int or float('inf') (default of float('inf'))
+    :param max_samples: The maximum number of samples through the search tree.
+        If no solution is found after collecting this many samples, then the
+        search fails.
+    :type max_samples: int or float('inf') (default of float('inf'))
     :param max_depth_limit: The maximum depth limit (default value of
         `float('inf')`)
     :type max_depth_limit: int or float('inf') (default of float('inf'))
     """
-    for i in range(num_samples):
+    num_samples = 0
+    while num_samples < max_samples:
         curr = problem.initial
         while curr:
             if problem.goal_test(curr):
