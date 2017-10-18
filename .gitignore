@@ -6,6 +6,7 @@
 *.pyc
 
 # ignore specific files
+.cache/
 dist/
 docs/_build
 docs/_static
