@@ -68,9 +68,9 @@ def branch_and_bound(problem, graph_search=True, depth_limit=float('inf')):
             yield node
             return
 
-        if node.cost() < bv:
+        if problem.node_value(node) < bv:
             b = node
-            bv = node.cost()
+            bv = problem.node_value(node)
             fringe.update_cost_limit(bv)
 
         if depth_limit == float('inf') or node.depth() < depth_limit:
@@ -120,7 +120,7 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
     :type graph_search: Boolean
     """
     b = problem.initial
-    bv = b.cost()
+    bv = problem.node_value(b)
 
     if problem.goal_test(b):
         yield b
@@ -143,7 +143,7 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
                     continue
                 elif graph_search:
                     closed.add(s)
-                sv = s.cost()
+                sv = problem.node_value(s)
                 if sv <= bv:
                     b = s
                     bv = sv
@@ -163,7 +163,7 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
             c = problem.random_node()
             while graph_search and c in closed:
                 c = problem.random_node()
-            cv = c.cost()
+            cv = problem.node_value(c)
 
             if graph_search:
                 closed.add(c)
@@ -296,7 +296,7 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
     """
     T = initial_temp
     b = problem.initial
-    bv = b.cost()
+    bv = problem.node_value(b)
 
     if problem.goal_test(b):
         yield b
@@ -323,7 +323,7 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
         for i in range(temp_length):
             iterations += 1
             s = problem.random_successor(c)
-            sv = s.cost()
+            sv = problem.node_value(s)
 
             if sv < bv:
                 b = s
