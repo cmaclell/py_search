@@ -9,6 +9,8 @@ from py_search.base import Node
 from py_search.uninformed import depth_first_search
 from py_search.uninformed import breadth_first_search
 from py_search.uninformed import iterative_deepening_search
+from py_search.uninformed import iterative_sampling
+from py_search.uninformed import bidirectional_graph_search
 from py_search.informed import best_first_search
 from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import widening_beam_search
@@ -105,6 +107,17 @@ class EightPuzzle:
         if zeroIndex in set([3, 4, 5, 6, 7, 8]):
             yield "down"
 
+    def invert_action(self, action):
+        if action == 'up':
+            return 'down'
+        elif action == 'left':
+            return 'right'
+        elif action == 'right':
+            return 'left'
+        elif action == 'down':
+            return 'up'
+        raise Exception("Invalid action")
+
 
 class EightPuzzleProblem(Problem):
     """
@@ -145,12 +158,17 @@ class EightPuzzleProblem(Problem):
             path_cost = node.cost() + 1
             yield Node(new_state, node, action, path_cost)
 
-    def goal_test(self, node):
+    def predecessors(self, node):
         """
-        Check if the goal state has been reached.
+        Computes successors and computes the value of the node as cost +
+        heuristic, which yields A* search when using best first search.
         """
-        goal = EightPuzzle()
-        return node.state == goal
+        for action in node.state.legalActions():
+            new_state = node.state.copy()
+            new_state.executeAction(action)
+            path_cost = node.cost() + 1
+            yield Node(new_state, node, node.state.invert_action(action),
+                       path_cost)
 
 
 class NoHeuristic(EightPuzzleProblem):
@@ -174,9 +192,14 @@ if __name__ == "__main__":
     print(puzzle)
     print()
 
-    compare_searches(problems=[EightPuzzleProblem(initial)],
-                     searches=[depth_first_search,
+    def iterative_sampling_100_10(problem):
+        return iterative_sampling(problem, num_samples=100, depth_limit=10)
+
+    compare_searches(problems=[EightPuzzleProblem(initial, EightPuzzle())],
+                     searches=[iterative_sampling_100_10,
+                               depth_first_search,
                                breadth_first_search,
+                               bidirectional_graph_search,
                                iterative_deepening_search,
                                best_first_search,
                                iterative_deepening_best_first_search,

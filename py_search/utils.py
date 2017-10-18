@@ -8,9 +8,24 @@ from __future__ import absolute_import
 from __future__ import division
 
 from tabulate import tabulate
+from random import uniform
 import timeit
 
 from py_search.base import AnnotatedProblem
+
+
+def weighted_choice(choices):
+    """
+    Given a list of weighted choices, choose one.
+    """
+    total = sum(w for w, c in choices)
+    r = uniform(0, total)
+    upto = 0
+    for w, c in choices:
+        if upto + w >= r:
+            return c
+        upto += w
+    assert False, "Shouldn't get here"
 
 
 def compare_searches(problems, searches):
@@ -27,15 +42,15 @@ def compare_searches(problems, searches):
     for problem in problems:
         for search in searches:
             annotated_problem = AnnotatedProblem(problem)
+            start_time = timeit.default_timer()
 
             try:
-                start_time = timeit.default_timer()
                 sol = next(search(annotated_problem))
                 elapsed = timeit.default_timer() - start_time
                 cost = sol.cost()
             except StopIteration:
+                elapsed = timeit.default_timer() - start_time
                 cost = 'Failed'
-                elapsed = 'Failed'
 
             table.append([problem.__class__.__name__, search.__name__,
                           annotated_problem.goal_tests,
