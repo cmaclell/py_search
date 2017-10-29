@@ -9,10 +9,11 @@ from __future__ import absolute_import
 from __future__ import division
 
 from py_search.base import PriorityQueue
-from py_search.uninformed import graph_search
+from py_search.uninformed import choose_search
 
 
-def best_first_search(problem, search=graph_search, cost_limit=float('inf')):
+def best_first_search(problem, cost_limit=float('inf'), search="graph",
+                      direction="forward"):
     """
     Cost limited best-first search. By default the cost limit is set to
     `float('inf')`, so it is identical to traditional best-first search. This
@@ -30,15 +31,19 @@ def best_first_search(problem, search=graph_search, cost_limit=float('inf')):
     :param cost_limit: The cost limit for the search (default = `float('inf')`)
     :type cost_limit: float
     """
-    for solution in search(problem,
-                           PriorityQueue(node_value=problem.node_value,
-                                         cost_limit=cost_limit)):
+    def queue_class():
+        return PriorityQueue(node_value=problem.node_value,
+                             cost_limit=cost_limit)
+
+    for solution in choose_search(problem, queue_class, search=search,
+                                  direction=direction):
         yield solution
 
 
-def iterative_deepening_best_first_search(problem, search=graph_search,
-                                          initial_cost_limit=0, cost_inc=1,
-                                          max_cost_limit=float('inf')):
+def iterative_deepening_best_first_search(problem, initial_cost_limit=0,
+                                          cost_inc=1,
+                                          max_cost_limit=float('inf'),
+                                          search="graph", direction="forward"):
     """
     A variant of iterative deepening that uses cost to determine the limit for
     expansion. When search fails, the cost limit is increased according to
@@ -63,14 +68,17 @@ def iterative_deepening_best_first_search(problem, search=graph_search,
     """
     cost_limit = initial_cost_limit
     while cost_limit < max_cost_limit:
-        for solution in search(problem,
-                               PriorityQueue(cost_limit=cost_limit,
-                                             node_value=problem.node_value)):
+        def queue_class():
+            return PriorityQueue(node_value=problem.node_value,
+                                 cost_limit=cost_limit)
+
+        for solution in choose_search(problem, queue_class, search=search,
+                                      direction=direction):
             yield solution
         cost_limit += cost_inc
 
 
-def beam_search(problem, beam_width=1, graph_search=True):
+def beam_search(problem, beam_width=1, search="graph"):
     """
     A variant of breadth-first search where all nodes in the fringe
     are expanded, but the resulting new fringe is limited to have length
@@ -101,6 +109,7 @@ def beam_search(problem, beam_width=1, graph_search=True):
     fringe = PriorityQueue(node_value=problem.node_value)
     fringe.push(problem.initial)
     closed[problem.initial] = problem.initial.cost()
+    graph_search = search == "graph"
 
     while len(fringe) > 0:
         parents = []
@@ -121,7 +130,7 @@ def beam_search(problem, beam_width=1, graph_search=True):
 
 
 def widening_beam_search(problem, initial_beam_width=1,
-                         max_beam_width=1000, graph_search=True):
+                         max_beam_width=1000, search="graph"):
     """
     A variant of beam search that successively increase the beam width when
     search fails. This ensures that if a solution exists, and you're using
@@ -142,6 +151,6 @@ def widening_beam_search(problem, initial_beam_width=1,
     beam_width = initial_beam_width
     while beam_width <= max_beam_width:
         for solution in beam_search(problem, beam_width=beam_width,
-                                    graph_search=graph_search):
+                                    search=search):
             yield solution
         beam_width += 1

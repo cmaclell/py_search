@@ -69,20 +69,15 @@ class Problem(object):
         """
         raise NotImplemented("No random node implemented!")
 
-    def state_goal_test(self, node, goal):
-        """
-        Returns true if the given node and goal match. This is used primarily
-        in bidirecitonal search, which compares nodes in the fringes.
-        """
-        return node.state == goal.state
-
-    def goal_test(self, node):
+    def goal_test(self, state_node, goal_node=None):
         """
         Returns true if a goal state is found. This is typically used not used
         by the local search / optimization techniques. By default, this checks
         if the state equals the goal.
         """
-        return node.state == self.goal.state
+        if goal_node is None:
+            goal_node = self.goal
+        return state_node == goal_node
 
 
 class AnnotatedProblem(Problem):
@@ -138,21 +133,33 @@ class AnnotatedProblem(Problem):
             self.nodes_expanded += 1
             yield s
 
-    def state_goal_test(self, node, goal):
-        """
-        A wrapper for the state_goal_test method that keeps track of the number
-        of goal_tests performed.
-        """
-        self.goal_tests += 1
-        return self.problem.state_goal_test(node, goal)
-
-    def goal_test(self, node):
+    def goal_test(self, state_node, goal_node=None):
         """
         A wrapper for the goal_test method that keeps track of the number of
         goal_tests performed.
         """
         self.goal_tests += 1
-        return self.problem.goal_test(node)
+        return self.problem.goal_test(state_node, goal_node)
+
+
+class JoinNode(object):
+    """
+    A class used to join two nodes in bidirectional search, so that it can be
+    returned and the depth / cost / path can be queried.
+    """
+
+    def __init__(self, state, goal):
+        self.state = state
+        self.goal = goal
+
+    def depth(self):
+        return self.state.depth() + self.goal.depth()
+
+    def cost(self):
+        return self.state.cost() + self.goal.cost()
+
+    def path(self):
+        return self.state.path() + reversed(self.goal.path())
 
 
 class Node(object):
@@ -183,8 +190,7 @@ class Node(object):
 
     def depth(self):
         """
-        Returns the depth of the current node. Uses a loop to compute depth
-        (no tail recursion in python).
+        Returns the depth of the current node.
         """
         curr = self
         depth = 0
@@ -256,7 +262,17 @@ class Fringe(object):
         raise NotImplemented("No pop method")
 
     def __len__(self):
-        raise NotImplemented("No len method")
+        """
+        Returns the length of the fringe.
+        """
+        raise NotImplemented("No __len__ method")
+
+    def __iter__(self):
+        """
+        Returns iterator that yields the elements in the order they would be
+        popped.
+        """
+        raise NotImplemented("No __iter__ method")
 
 
 class FIFOQueue(Fringe):
@@ -291,6 +307,9 @@ class FIFOQueue(Fringe):
     def __len__(self):
         return len(self.nodes)
 
+    def __iter__(self):
+        return iter(self.nodes)
+
 
 class LIFOQueue(FIFOQueue):
     """
@@ -310,6 +329,9 @@ class LIFOQueue(FIFOQueue):
 
     def pop(self):
         return self.nodes.pop()
+
+    def __iter__(self):
+        return reversed(self.nodes)
 
 
 class PriorityQueue(Fringe):
@@ -408,3 +430,7 @@ class PriorityQueue(Fringe):
 
     def __len__(self):
         return len(self.nodes)
+
+    def __iter__(self):
+        for v, n in reversed(self.nodes):
+            yield n

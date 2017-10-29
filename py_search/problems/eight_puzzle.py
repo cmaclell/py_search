@@ -10,7 +10,6 @@ from py_search.uninformed import depth_first_search
 from py_search.uninformed import breadth_first_search
 from py_search.uninformed import iterative_deepening_search
 from py_search.uninformed import iterative_sampling
-from py_search.uninformed import bidirectional_graph_search
 from py_search.informed import best_first_search
 from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import widening_beam_search
@@ -130,11 +129,10 @@ class EightPuzzleProblem(Problem):
     a more greedy variant when used with Beam Search.
     """
 
-    def misplaced_tile_heuristic(self, state):
+    def misplaced_tile_heuristic(self, state, goal):
         """
         The misplaced tiles heuristic.
         """
-        goal = EightPuzzle()
         h = 0
         for i, v in enumerate(state.state):
             if state.state[i] != goal.state[i]:
@@ -145,7 +143,8 @@ class EightPuzzleProblem(Problem):
         """
         The function used to compute the value of a node.
         """
-        return node.cost() + self.misplaced_tile_heuristic(node.state)
+        return (node.cost() + self.misplaced_tile_heuristic(node.state,
+                                                            self.goal.state))
 
     def successors(self, node):
         """
@@ -193,13 +192,16 @@ if __name__ == "__main__":
     print()
 
     def iterative_sampling_100_10(problem):
-        return iterative_sampling(problem, num_samples=100, depth_limit=10)
+        return iterative_sampling(problem, max_samples=100, depth_limit=10)
+
+    def bidirectional_breadth_first_search(problem):
+        return breadth_first_search(problem, direction="both")
 
     compare_searches(problems=[EightPuzzleProblem(initial, EightPuzzle())],
                      searches=[iterative_sampling_100_10,
                                depth_first_search,
                                breadth_first_search,
-                               bidirectional_graph_search,
+                               bidirectional_breadth_first_search,
                                iterative_deepening_search,
                                best_first_search,
                                iterative_deepening_best_first_search,

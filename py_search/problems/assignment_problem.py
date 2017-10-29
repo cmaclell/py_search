@@ -79,7 +79,7 @@ class AssignmentProblem(Problem):
                     yield Node(new_state, node, (i, u), c,
                                extra=(costs, new_unassigned))
 
-    def goal_test(self, node):
+    def goal_test(self, node, goal):
         """
         A test of whether a complete assignment has been reached.
         """
@@ -160,7 +160,7 @@ class LocalAssignmentProblem(Problem):
         return Node(state, node_cost=cost(state, self.initial.extra[0]),
                     extra=self.initial.extra)
 
-    def goal_test(self, node):
+    def goal_test(self, node, goal):
         return False
 
 

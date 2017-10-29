@@ -102,7 +102,7 @@ class LocalGraphPartitionProblem(Problem):
         return Node(p, node_cost=cutsize(E, p),
                     extra=self.initial.extra)
 
-    def goal_test(self, node):
+    def goal_test(self, node, goal):
         """
         The search should never terminate early.
         """

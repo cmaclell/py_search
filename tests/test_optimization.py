@@ -15,7 +15,6 @@ from py_search.optimization import hill_climbing
 from py_search.optimization import local_beam_search
 from py_search.optimization import simulated_annealing
 from py_search.optimization import branch_and_bound
-from py_search.utils import compare_searches
 
 
 class PlateauProblem(Problem):
@@ -31,7 +30,7 @@ class PlateauProblem(Problem):
         return Node(v, node, 'expand', max(min(v, node.extra[1]),
                                            node.extra[0]), extra=node.extra)
 
-    def goal_test(self, node):
+    def goal_test(self, state_node, goal_node=None):
         return False
 
 
@@ -49,7 +48,7 @@ class EasyProblem(Problem):
             v = node.cost() + normalvariate(0, 1)
         return Node(v, node, 'expand', v, extra=node.extra)
 
-    def goal_test(self, node):
+    def goal_test(self, state_node, goal_node=None):
         return False
 
 

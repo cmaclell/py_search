@@ -124,7 +124,7 @@ class nQueensProblem(Problem):
                     yield Node(new_state, node, ('add-queen', row, nc),
                                new_state.num_conflicts())
 
-    def goal_test(self, node):
+    def goal_test(self, node, goal):
         """
         Check if the goal state (i.e., no queen conflicts) has been reached.
         """
@@ -181,7 +181,7 @@ class LocalnQueensProblem(Problem):
         cost = new_state.num_conflicts()
         return Node(new_state, node, ('swap', (r1, c1), (r2, c2)), cost)
 
-    def goal_test(self, node):
+    def goal_test(self, node, goal):
         """
         Check if the goal state (i.e., no queen conflicts) has been reached.
         """

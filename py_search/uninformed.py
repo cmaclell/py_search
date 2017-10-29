@@ -11,13 +11,13 @@ from __future__ import division
 
 from py_search.base import LIFOQueue
 from py_search.base import FIFOQueue
-from py_search.base import Node
+from py_search.base import JoinNode
 
 
 def tree_search(problem, fringe, depth_limit=float('inf')):
     """
     Perform tree search (i.e., search where states might be duplicated) using
-    the given fringe class.Returns an iterators to the solutions, so more than
+    the given fringe class. Returns an iterators to the solutions, so more than
     one solution can be found.
 
     :param problem: The problem to solve.
@@ -33,10 +33,64 @@ def tree_search(problem, fringe, depth_limit=float('inf')):
     while len(fringe) > 0:
         node = fringe.pop()
 
-        if problem.goal_test(node):
+        if problem.goal_test(node, problem.goal):
             yield node
         elif depth_limit == float('inf') or node.depth() < depth_limit:
             fringe.extend(problem.successors(node))
+
+
+def bidirectional_tree_search(problem, forward_fringe=None,
+                              backward_fringe=None, depth_limit=float('inf')):
+    """
+    A generalization of tree search that supports search in either, or both,
+    directions using the provided fringe classes. Returns an iterator to the
+    solutions, so more than one solution can be found.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    :param ffringe: The fringe class to use in the forward direction.
+    :type ffringe: :class:`fringe`
+    :param bfringe: The fringe class to use in the reverse direction.
+    :type ffringe: :class:`fringe`
+    :param depth_limit: A limit for the depth of the search tree from either
+        direction. If set to float('inf'), then depth is unlimited.
+    :type depth_limit: int or float('inf')
+    """
+    if (forward_fringe is None and backward_fringe is None):
+        raise Exception("Must provide a fringe class for forward, backward"
+                        "or both.")
+
+    if forward_fringe is None:
+        ffringe = [problem.initial]
+    else:
+        ffringe = forward_fringe
+        ffringe.push(problem.initial)
+
+    if backward_fringe is None:
+        bfringe = [problem.goal]
+    else:
+        bfringe = backward_fringe
+        bfringe.push(problem.goal)
+
+    while len(ffringe) > 0 and len(bfringe) > 0:
+
+        if forward_fringe is not None:
+            state = ffringe.pop()
+            for goal in bfringe:
+                if problem.goal_test(state, goal):
+                    yield state
+            else:
+                if depth_limit == float('inf') or state.depth() < depth_limit:
+                    ffringe.extend(problem.successors(state))
+
+        if backward_fringe is not None:
+            goal = bfringe.pop()
+            for state in ffringe:
+                if problem.goal_test(state, goal):
+                    yield state
+            else:
+                if depth_limit == float('inf') or goal.depth() < depth_limit:
+                    bfringe.extend(problem.predecessors(goal))
 
 
 def graph_search(problem, fringe, depth_limit=float('inf')):
@@ -62,7 +116,7 @@ def graph_search(problem, fringe, depth_limit=float('inf')):
 
     while len(fringe) > 0:
         node = fringe.pop()
-        if problem.goal_test(node):
+        if problem.goal_test(node, problem.goal):
             yield node
         elif depth_limit == float('inf') or node.depth() < depth_limit:
             for s in problem.successors(node):
@@ -71,7 +125,92 @@ def graph_search(problem, fringe, depth_limit=float('inf')):
                     closed[s] = s.cost()
 
 
-def depth_first_search(problem, depth_limit=float('inf'), search=graph_search):
+def bidirectional_graph_search(problem, forward_fringe=None,
+                               backward_fringe=None, depth_limit=float('inf')):
+    """
+    A uninformed technique that searchs simultaneously in both the forward and
+    backward directions.
+    """
+    if (forward_fringe is None and backward_fringe is None):
+        raise Exception("Must provide a fringe class for forward, backward"
+                        "or both.")
+
+    if forward_fringe is None:
+        ffringe = [problem.initial]
+    else:
+        ffringe = forward_fringe
+        fclosed = {}
+        ffringe.push(problem.initial)
+        fclosed[problem.initial] = problem.initial.cost()
+
+    if backward_fringe is None:
+        bfringe = [problem.goal]
+    else:
+        bfringe = backward_fringe
+        bclosed = {}
+        bfringe.push(problem.goal)
+        bclosed[problem.goal] = problem.goal.cost()
+
+    while len(ffringe) > 0 and len(bfringe) > 0:
+
+        if forward_fringe is not None:
+            state = ffringe.pop()
+            for goal in bfringe:
+                if problem.goal_test(state, goal):
+                    yield JoinNode(state, goal)
+            else:
+                if depth_limit == float('inf') or state.depth() < depth_limit:
+                    for s in problem.successors(state):
+                        if s not in fclosed or s.cost() < fclosed[s]:
+                            ffringe.push(s)
+                            fclosed[s] = s.cost()
+
+        if backward_fringe is not None:
+            goal = bfringe.pop()
+            for state in ffringe:
+                if problem.goal_test(state, goal):
+                    yield JoinNode(state, goal)
+
+            else:
+                if depth_limit == float('inf') or goal.depth() < depth_limit:
+                    for p in problem.predecessors(goal):
+                        if (p not in bclosed or p.cost() < bclosed[p]):
+                            bfringe.push(p)
+                            bclosed[p] = p.cost()
+
+
+def choose_search(problem, queue_class, depth_limit=float('inf'),
+                  search="graph", direction="forward"):
+    """
+    Given the arguments, chooses the appropriate underlying classes
+    to instantiate the search.
+    """
+    if direction == "forward" and search == "tree":
+        return tree_search(problem, queue_class(), depth_limit)
+    elif direction == "forward" and search == "graph":
+        return graph_search(problem, queue_class(), depth_limit)
+    if direction == "backward":
+        forward_fringe = None
+        backward_fringe = queue_class()
+    elif direction == "both":
+        forward_fringe = queue_class()
+        backward_fringe = queue_class()
+    else:
+        raise Exception("Direction must be forward, backward, or both.")
+
+    if search == "tree":
+        search = bidirectional_tree_search
+    elif search == "graph":
+        search = bidirectional_graph_search
+    else:
+        raise Exception("Search must be tree or graph.")
+
+    return search(problem, forward_fringe=forward_fringe,
+                  backward_fringe=backward_fringe, depth_limit=depth_limit)
+
+
+def depth_first_search(problem, depth_limit=float('inf'), search="graph",
+                       direction="forward"):
     """
     A simple implementation of depth-first search using a LIFO queue.
 
@@ -83,12 +222,16 @@ def depth_first_search(problem, depth_limit=float('inf'), search=graph_search):
         float('inf'), then depth is unlimited.
     :type depth_limit: int or float('inf')
     """
-    for solution in search(problem, LIFOQueue(), depth_limit):
+    for solution in choose_search(problem, LIFOQueue, depth_limit=depth_limit,
+                                  search=search, direction=direction):
         yield solution
+
+    # for solution in search(problem, LIFOQueue(), depth_limit):
+    #     yield solution
 
 
 def breadth_first_search(problem, depth_limit=float('inf'),
-                         search=graph_search):
+                         search="graph", direction="forward"):
     """
     A simple implementation of depth-first search using a FIFO queue.
 
@@ -100,13 +243,17 @@ def breadth_first_search(problem, depth_limit=float('inf'),
         float('inf'), then depth is unlimited.
     :type depth_limit: int or float('inf')
     """
-    for solution in search(problem, FIFOQueue(), depth_limit):
+    for solution in choose_search(problem, FIFOQueue, depth_limit=depth_limit,
+                                  search=search, direction=direction):
         yield solution
+    # for solution in search(problem, FIFOQueue(), depth_limit):
+    #     yield solution
 
 
-def iterative_deepening_search(problem, search=graph_search,
+def iterative_deepening_search(problem, search="graph",
                                initial_depth_limit=0, depth_inc=1,
-                               max_depth_limit=float('inf')):
+                               max_depth_limit=float('inf'),
+                               direction="forward"):
     """
     An implementation of iterative deepening search. This search is basically
     depth-limited depth first up to the depth limit. If no solution is found at
@@ -127,7 +274,8 @@ def iterative_deepening_search(problem, search=graph_search,
     """
     depth_limit = initial_depth_limit
     while depth_limit < max_depth_limit:
-        for solution in depth_first_search(problem, depth_limit, search):
+        for solution in depth_first_search(problem, depth_limit=depth_limit,
+                                           search=search, direction=direction):
             yield solution
         depth_limit += depth_inc
 
@@ -172,67 +320,9 @@ def iterative_sampling(problem, max_samples=float('inf'),
     while num_samples < max_samples:
         curr = problem.initial
         while curr:
-            if problem.goal_test(curr):
+            if problem.goal_test(curr, problem.goal):
                 yield curr
             elif depth_limit == float('inf') or curr.depth() < depth_limit:
                 curr = problem.random_successor(curr)
             else:
                 curr = False
-
-
-def bidirectional_graph_search(problem, depth_limit=float('inf')):
-    """
-    A uninformed technique that searchs simultaneously in both the forward and
-    backward directions.
-    """
-    forward_fringe = FIFOQueue()
-    forward_closed = {}
-    forward_fringe.push(problem.initial)
-    forward_closed[problem.initial] = problem.initial.cost()
-
-    backward_fringe = FIFOQueue()
-    backward_closed = {}
-    backward_fringe.push(problem.goal)
-    backward_closed[problem.goal] = problem.goal.cost()
-
-    while len(forward_fringe) > 0 and len(backward_fringe) > 0:
-        node = forward_fringe.pop()
-        for g in backward_fringe.nodes:
-            if problem.state_goal_test(node, g):
-                curr_g = g
-                while curr_g is not None:
-                    if curr_g.parent is None:
-                        p_cost = 0
-                    else:
-                        p_cost = curr_g.parent.cost()
-                    node = Node(g, node, curr_g.action, node.cost() +
-                                curr_g.cost() - p_cost)
-                    curr_g = curr_g.parent
-                yield node
-        else:
-            if depth_limit == float('inf') or node.depth() < depth_limit:
-                for s in problem.successors(node):
-                    if s not in forward_closed or s.cost() < forward_closed[s]:
-                        forward_fringe.push(s)
-                        forward_closed[s] = s.cost()
-
-        node = backward_fringe.pop()
-        for s in forward_fringe.nodes:
-            if problem.state_goal_test(s, node):
-                curr_g = node
-                node = s
-                while curr_g is not None:
-                    if curr_g.parent is None:
-                        p_cost = 0
-                    else:
-                        p_cost = curr_g.parent.cost()
-                    node = Node(g, node, curr_g.action, node.cost() +
-                                curr_g.cost() - p_cost)
-                    curr_g = curr_g.parent
-                yield node
-        else:
-            if depth_limit == float('inf') or node.depth() < depth_limit:
-                for s in problem.predecessors(node):
-                    if (s not in backward_closed or s.cost() < backward_closed[s]):
-                        backward_fringe.push(s)
-                        backward_closed[s] = s.cost()
