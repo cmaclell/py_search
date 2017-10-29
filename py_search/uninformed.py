@@ -11,7 +11,7 @@ from __future__ import division
 
 from py_search.base import LIFOQueue
 from py_search.base import FIFOQueue
-from py_search.base import JoinNode
+from py_search.base import SolutionNode
 
 
 def tree_search(problem, fringe, depth_limit=float('inf')):
@@ -157,7 +157,7 @@ def bidirectional_graph_search(problem, forward_fringe=None,
             state = ffringe.pop()
             for goal in bfringe:
                 if problem.goal_test(state, goal):
-                    yield JoinNode(state, goal)
+                    yield SolutionNode(state, goal)
             else:
                 if depth_limit == float('inf') or state.depth() < depth_limit:
                     for s in problem.successors(state):
@@ -169,7 +169,7 @@ def bidirectional_graph_search(problem, forward_fringe=None,
             goal = bfringe.pop()
             for state in ffringe:
                 if problem.goal_test(state, goal):
-                    yield JoinNode(state, goal)
+                    yield SolutionNode(state, goal)
 
             else:
                 if depth_limit == float('inf') or goal.depth() < depth_limit:

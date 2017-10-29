@@ -6,6 +6,7 @@ from random import choice
 
 from py_search.base import Problem
 from py_search.base import Node
+from py_search.base import GoalNode
 from py_search.uninformed import depth_first_search
 from py_search.uninformed import breadth_first_search
 from py_search.uninformed import iterative_deepening_search
@@ -143,8 +144,12 @@ class EightPuzzleProblem(Problem):
         """
         The function used to compute the value of a node.
         """
-        return (node.cost() + self.misplaced_tile_heuristic(node.state,
-                                                            self.goal.state))
+        if isinstance(node, GoalNode):
+            return (node.cost() + self.misplaced_tile_heuristic(self.initial.state,
+                                                                node.state))
+        else:
+            return (node.cost() + self.misplaced_tile_heuristic(node.state,
+                                                                self.goal.state))
 
     def successors(self, node):
         """
@@ -157,17 +162,17 @@ class EightPuzzleProblem(Problem):
             path_cost = node.cost() + 1
             yield Node(new_state, node, action, path_cost)
 
-    def predecessors(self, node):
+    def predecessors(self, goal_node):
         """
         Computes successors and computes the value of the node as cost +
         heuristic, which yields A* search when using best first search.
         """
-        for action in node.state.legalActions():
-            new_state = node.state.copy()
-            new_state.executeAction(action)
-            path_cost = node.cost() + 1
-            yield Node(new_state, node, node.state.invert_action(action),
-                       path_cost)
+        for action in goal_node.state.legalActions():
+            new_goal = goal_node.state.copy()
+            new_goal.executeAction(action)
+            path_cost = goal_node.cost() + 1
+            yield GoalNode(new_goal, goal_node,
+                           goal_node.state.invert_action(action), path_cost)
 
 
 class NoHeuristic(EightPuzzleProblem):
@@ -194,6 +199,9 @@ if __name__ == "__main__":
     def iterative_sampling_100_10(problem):
         return iterative_sampling(problem, max_samples=100, depth_limit=10)
 
+    def backward_bf_search(problem):
+        return best_first_search(problem, direction="backward")
+
     def bidirectional_breadth_first_search(problem):
         return breadth_first_search(problem, direction="both")
 
@@ -204,5 +212,6 @@ if __name__ == "__main__":
                                bidirectional_breadth_first_search,
                                iterative_deepening_search,
                                best_first_search,
+                               backward_bf_search,
                                iterative_deepening_best_first_search,
                                widening_beam_search])

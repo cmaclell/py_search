@@ -29,7 +29,7 @@ class Problem(object):
     """
     def __init__(self, initial, goal=None, initial_cost=0, extra=None):
         self.initial = Node(initial, None, None, initial_cost, extra=extra)
-        self.goal = Node(goal)
+        self.goal = GoalNode(goal)
 
     def node_value(self, node):
         """
@@ -142,26 +142,6 @@ class AnnotatedProblem(Problem):
         return self.problem.goal_test(state_node, goal_node)
 
 
-class JoinNode(object):
-    """
-    A class used to join two nodes in bidirectional search, so that it can be
-    returned and the depth / cost / path can be queried.
-    """
-
-    def __init__(self, state, goal):
-        self.state = state
-        self.goal = goal
-
-    def depth(self):
-        return self.state.depth() + self.goal.depth()
-
-    def cost(self):
-        return self.state.cost() + self.goal.cost()
-
-    def path(self):
-        return self.state.path() + reversed(self.goal.path())
-
-
 class Node(object):
     """
     A class to represent a node in the search. This node stores state
@@ -234,6 +214,42 @@ class Node(object):
 
     def __lt__(self, other):
         return self.node_cost < other.node_cost
+
+
+class GoalNode(Node):
+    """
+    Used to represent goals in the backwards portion of the search.
+    """
+    def path(self):
+        """
+        Returns a path (tuple of actions) from the initial to current node.
+        """
+        actions = []
+        current = self
+        while current.parent:
+            actions.append(current.action)
+            current = current.parent
+        return tuple(actions)
+
+
+class SolutionNode(object):
+    """
+    A class used to join two nodes in bidirectional search, so that it can be
+    returned and the depth / cost / path can be queried.
+    """
+
+    def __init__(self, state, goal):
+        self.state = state
+        self.goal = goal
+
+    def depth(self):
+        return self.state.depth() + self.goal.depth()
+
+    def cost(self):
+        return self.state.cost() + self.goal.cost()
+
+    def path(self):
+        return self.state.path() + self.goal.path()
 
 
 class Fringe(object):
