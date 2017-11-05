@@ -115,7 +115,7 @@ def beam_search(problem, beam_width=1, search="graph"):
         parents = []
         while len(fringe) > 0 and len(parents) < beam_width:
             parent = fringe.pop()
-            if problem.goal_test(parent):
+            if problem.goal_test(parent, problem.goal):
                 yield parent
             parents.append(parent)
         fringe.clear()
