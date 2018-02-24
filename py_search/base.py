@@ -27,6 +27,7 @@ class Problem(object):
     successors and goal_test. Some search techniques also require the
     random_successor and predecessors methods to be implemented.
     """
+
     def __init__(self, initial, goal=None, initial_cost=0, extra=None):
         self.initial = Node(initial, None, None, initial_cost, extra=extra)
         self.goal = GoalNode(goal)
@@ -71,9 +72,10 @@ class Problem(object):
 
     def goal_test(self, state_node, goal_node=None):
         """
-        Returns true if a goal state is found. This is typically used not used
-        by the local search / optimization techniques. By default, this checks
-        if the state equals the goal.
+        Returns true if a goal state is found. This is typically not used by
+        the local search / optimization techniques, but some of them use the
+        goal test to determine if the search should terminate early. By
+        default, this checks if the state equals the goal.
         """
         if goal_node is None:
             goal_node = self.goal
@@ -85,6 +87,7 @@ class AnnotatedProblem(Problem):
     A Problem class that wraps around another Problem and keeps stats on nodes
     expanded and goal tests performed.
     """
+
     def __init__(self, problem):
         self.problem = problem
         self.initial = problem.initial
@@ -160,6 +163,7 @@ class Node(object):
                   store non-hashable information about the state.
     :type extra: object
     """
+
     def __init__(self, state, parent=None, action=None, node_cost=0,
                  extra=None):
         self.state = state
@@ -168,16 +172,16 @@ class Node(object):
         self.node_cost = node_cost
         self.extra = extra
 
+        if parent is None:
+            self.depth = 0
+        else:
+            self.depth = parent.depth() + 1
+
     def depth(self):
         """
         Returns the depth of the current node.
         """
-        curr = self
-        depth = 0
-        while curr.parent is not None:
-            curr = curr.parent
-            depth += 1
-        return depth
+        return self.depth
 
     def cost(self):
         """
@@ -213,16 +217,21 @@ class Node(object):
         return not self.__eq__(other)
 
     def __lt__(self, other):
-        return self.node_cost < other.node_cost
+        return self.cost() < other.cost()
 
 
 class GoalNode(Node):
     """
     Used to represent goals in the backwards portion of the search.
     """
+
     def path(self):
         """
         Returns a path (tuple of actions) from the initial to current node.
+
+        Similar to Node's path function, but returns the path in the opposite
+        order because the goal nodes branch out from the goal (not the start
+        state).
         """
         actions = []
         current = self
@@ -234,22 +243,53 @@ class GoalNode(Node):
 
 class SolutionNode(object):
     """
-    A class used to join two nodes in bidirectional search, so that it can be
-    returned and the depth / cost / path can be queried.
+    A Node class that joins a state (:class:`Node`) and a goal
+    (:class:`GoalNode`) in bidirectional search, so that it can be returned and
+    the used like other :class:`Node`. In particular it provides an isomorphic
+    interface for querying depth, cost, and path.
+
+    The state, parent, action, node_cost, and extra attributes have been
+    removed because they are not well defined for a join. The key issue here is
+    that the state and goal nodes might not be specified in the same terms. For
+    example, goals may be partial states and goal_test might return True when
+    the state_node satisfies the goal_node (not when they are strictly equal).
+
+    Thus, to generate the actual state represented by the solution node, the
+    returned path needs to be executed from the initial state, which is outside
+    the scope of this library since it has no knowledge of how to execute paths
+    (it just generates them using the user specified successor/predecessor
+    functions).
     """
 
     def __init__(self, state, goal):
-        self.state = state
-        self.goal = goal
+        self.state_node = state
+        self.goal_node = goal
 
     def depth(self):
-        return self.state.depth() + self.goal.depth()
+        return self.state_node.depth() + self.goal_node.depth()
 
     def cost(self):
-        return self.state.cost() + self.goal.cost()
+        return self.state_node.cost() + self.goal_node.cost()
 
     def path(self):
-        return self.state.path() + self.goal.path()
+        return self.state_node.path() + self.goal_node.path()
+
+    def __str__(self):
+        return str(self.state_node) + " + " + str(self.goal_node)
+
+    def __repr__(self):
+        return repr(self.state_node) + repr(self.goal_node)
+
+    def __hash__(self):
+        return hash((self.state_node.state, self.goal_node.state))
+
+    def __eq__(self, other):
+        return (isinstance(other, SolutionNode) and
+                self.state_node == other.state_node and
+                self.goal_node == other.goal_node)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 
 class Fringe(object):
@@ -385,6 +425,7 @@ class PriorityQueue(Fringe):
         ``float('inf')``
     :type max_length: int or ``float('inf')``
     """
+
     def __init__(self, node_value=lambda x: x.cost(), cost_limit=float('inf'),
                  max_length=float('inf')):
         self.nodes = []
