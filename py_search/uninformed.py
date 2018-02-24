@@ -35,6 +35,7 @@ def tree_search(problem, fringe, depth_limit=float('inf')):
 
         if problem.goal_test(node, problem.goal):
             yield node
+
         elif depth_limit == float('inf') or node.depth() < depth_limit:
             fringe.extend(problem.successors(node))
 
@@ -48,10 +49,10 @@ def bidirectional_tree_search(problem, forward_fringe=None,
 
     :param problem: The problem to solve.
     :type problem: :class:`Problem`
-    :param ffringe: The fringe class to use in the forward direction.
-    :type ffringe: :class:`fringe`
-    :param bfringe: The fringe class to use in the reverse direction.
-    :type ffringe: :class:`fringe`
+    :param forward_fringe: The fringe class to use in the forward direction.
+    :type forward_fringe: :class:`fringe`
+    :param backward_fringe: The fringe class to use in the reverse direction.
+    :type backward_fringe: :class:`fringe`
     :param depth_limit: A limit for the depth of the search tree from either
         direction. If set to float('inf'), then depth is unlimited.
     :type depth_limit: int or float('inf')
@@ -78,7 +79,7 @@ def bidirectional_tree_search(problem, forward_fringe=None,
             state = ffringe.pop()
             for goal in bfringe:
                 if problem.goal_test(state, goal):
-                    yield state
+                    yield SolutionNode(state, goal)
             else:
                 if depth_limit == float('inf') or state.depth() < depth_limit:
                     ffringe.extend(problem.successors(state))
@@ -87,7 +88,7 @@ def bidirectional_tree_search(problem, forward_fringe=None,
             goal = bfringe.pop()
             for state in ffringe:
                 if problem.goal_test(state, goal):
-                    yield state
+                    yield SolutionNode(state, goal)
             else:
                 if depth_limit == float('inf') or goal.depth() < depth_limit:
                     bfringe.extend(problem.predecessors(goal))
