@@ -173,15 +173,15 @@ class Node(object):
         self.extra = extra
 
         if parent is None:
-            self.depth = 0
+            self.node_depth = 0
         else:
-            self.depth = parent.depth() + 1
+            self.node_depth = parent.depth() + 1
 
     def depth(self):
         """
         Returns the depth of the current node.
         """
-        return self.depth
+        return self.node_depth
 
     def cost(self):
         """
