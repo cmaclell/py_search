@@ -44,13 +44,13 @@ class Problem(object):
         """
         An iterator that yields all of the predecessors of the current goal.
         """
-        raise NotImplemented("No predecessors function implemented")
+        raise NotImplementedError("No predecessors function implemented")
 
     def successors(self, node):
         """
         An iterator that yields all of the successors of the current node.
         """
-        raise NotImplemented("No successors function implemented")
+        raise NotImplementedError("No successors function implemented")
 
     def random_successor(self, node):
         """
@@ -68,7 +68,7 @@ class Problem(object):
         is used by some of the local search / optimization techniques to
         randomly restart search.
         """
-        raise NotImplemented("No random node implemented!")
+        raise NotImplementedError("No random node implemented!")
 
     def goal_test(self, state_node, goal_node=None):
         """
@@ -302,7 +302,7 @@ class Fringe(object):
         """
         Adds one node to the collection.
         """
-        raise NotImplemented("No push method")
+        raise NotImplementedError("No push method")
 
     def extend(self, nodes):
         """
@@ -315,20 +315,20 @@ class Fringe(object):
         """
         Pops a node off the collection.
         """
-        raise NotImplemented("No pop method")
+        raise NotImplementedError("No pop method")
 
     def __len__(self):
         """
         Returns the length of the fringe.
         """
-        raise NotImplemented("No __len__ method")
+        raise NotImplementedError("No __len__ method")
 
     def __iter__(self):
         """
         Returns iterator that yields the elements in the order they would be
         popped.
         """
-        raise NotImplemented("No __iter__ method")
+        raise NotImplementedError("No __iter__ method")
 
 
 class FIFOQueue(Fringe):
@@ -339,12 +339,13 @@ class FIFOQueue(Fringe):
     >>> fifo.push(0)
     >>> fifo.push(1)
     >>> fifo.push(2)
+    >>> list(fifo)
+    [0, 1, 2]
+    >>> fifo.remove(2)
     >>> print(fifo.pop())
     0
     >>> print(fifo.pop())
     1
-    >>> print(fifo.pop())
-    2
     """
 
     def __init__(self):
@@ -375,6 +376,8 @@ class LIFOQueue(FIFOQueue):
     >>> lifo.push(0)
     >>> lifo.push(1)
     >>> lifo.push(2)
+    >>> list(lifo)
+    [2, 1, 0]
     >>> print(lifo.pop())
     2
     >>> print(lifo.pop())
@@ -405,14 +408,27 @@ class PriorityQueue(Fringe):
     >>> pq.push(2)
     >>> pq.push(6)
     >>> pq.push(7)
-    >>> print(len(pq))
+    >>> len(pq)
     3
-    >>> print(pq.pop())
+    >>> list(pq)
+    [0, 2, 6]
+    >>> pq.update_cost_limit(5)
+    >>> len(pq)
+    2
+    >>> pq.peek()
+    0
+    >>> pq.peek_value()
     0
     >>> print(pq.pop())
+    0
+    >>> pq.peek()
+    2
+    >>> pq.peek_value()
     2
     >>> print(pq.pop())
-    6
+    2
+    >>> len(pq)
+    0
 
     :param node_value: The node evaluation function (defaults to
         ``lambda x: x.cost()``)
@@ -458,7 +474,7 @@ class PriorityQueue(Fringe):
         """
         self.cost_limit = cost_limit
         for i in range(len(self.nodes)):
-            if self.nodes[i][0] <= self.cost_limit:
+            if self.nodes[i][0] >= -self.cost_limit:
                 self.nodes = self.nodes[i:]
                 break
 
