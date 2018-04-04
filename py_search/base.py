@@ -202,10 +202,10 @@ class Node(object):
         return tuple(actions)
 
     def __str__(self):
-        return str(self.state) + str(self.extra)
+        return "State: %s, Extra: %s" % (self.state, self.extra)
 
     def __repr__(self):
-        return repr(self.state)
+        return "Node(%s)" % repr(self.state)
 
     def __hash__(self):
         return hash(self.state)
@@ -224,6 +224,9 @@ class GoalNode(Node):
     """
     Used to represent goals in the backwards portion of the search.
     """
+
+    def __repr__(self):
+        return "GoalNode(%s)" % repr(self.state)
 
     def path(self):
         """
@@ -275,10 +278,12 @@ class SolutionNode(object):
         return self.state_node.path() + self.goal_node.path()
 
     def __str__(self):
-        return str(self.state_node) + " + " + str(self.goal_node)
+        return "StateNode={%s}, GoalNode={%s}" % (self.state_node,
+                                                  self.goal_node)
 
     def __repr__(self):
-        return repr(self.state_node) + repr(self.goal_node)
+        return "SolutionNode(%s, %s)" % (repr(self.state_node),
+                                         repr(self.goal_node))
 
     def __hash__(self):
         return hash((self.state_node.state, self.goal_node.state))

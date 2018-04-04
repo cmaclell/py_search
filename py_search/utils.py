@@ -11,7 +11,6 @@ from random import uniform
 from functools import wraps
 from functools import partial
 import timeit
-import numpy as np
 
 from py_search.base import AnnotatedProblem
 

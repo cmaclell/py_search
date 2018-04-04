@@ -4,6 +4,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 from random import shuffle
+from random import seed
 
 from py_search.base import Problem
 from py_search.base import Node
@@ -17,6 +18,8 @@ from py_search.optimization import local_beam_search
 from py_search.optimization import simulated_annealing
 from py_search.optimization import branch_and_bound
 from py_search.utils import compare_searches
+
+seed(0)
 
 
 class nQueens:
@@ -181,7 +184,7 @@ class LocalnQueensProblem(Problem):
         cost = new_state.num_conflicts()
         return Node(new_state, node, ('swap', (r1, c1), (r2, c2)), cost)
 
-    def goal_test(self, node, goal):
+    def goal_test(self, node, goal=None):
         """
         Check if the goal state (i.e., no queen conflicts) has been reached.
         """
@@ -194,7 +197,7 @@ if __name__ == "__main__":
     print("BACKTRACKING SEARCH")
     print("###################")
 
-    initial = nQueens(5)
+    initial = nQueens(6)
     print("Empty %i-Queens Problem" % initial.n)
     print(initial)
     print()

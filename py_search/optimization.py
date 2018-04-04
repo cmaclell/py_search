@@ -13,9 +13,10 @@ from math import log
 from random import random
 
 from py_search.base import PriorityQueue
+from py_search.base import SolutionNode
 
 
-def branch_and_bound(problem, graph_search=True, depth_limit=float('inf')):
+def branch_and_bound(problem, graph=True, depth_limit=float('inf')):
     """
     An exhaustive optimization technique that is guranteed to give the best
     solution. In general the algorithm starts with some (potentially
@@ -42,9 +43,9 @@ def branch_and_bound(problem, graph_search=True, depth_limit=float('inf')):
 
     :param problem: The problem to solve.
     :type problem: :class:`py_search.base.Problem`
-    :param graph_search: Whether to use graph search (no duplicates) or tree
-        search (duplicates)
-    :type graph_search: Boolean
+    :param graph: Whether to use graph search (no duplicates) or tree search
+                  (duplicates).
+    :type graph: Boolean
     """
     b = None
     bv = float('inf')
@@ -52,7 +53,7 @@ def branch_and_bound(problem, graph_search=True, depth_limit=float('inf')):
     fringe = PriorityQueue(node_value=problem.node_value)
     fringe.push(problem.initial)
 
-    if graph_search:
+    if graph:
         closed = set()
         closed.add(problem.initial)
 
@@ -64,9 +65,8 @@ def branch_and_bound(problem, graph_search=True, depth_limit=float('inf')):
 
         node = fringe.pop()
 
-        if problem.goal_test(node):
-            yield node
-            return
+        if problem.goal_test(node, problem.goal):
+            yield SolutionNode(node, problem.goal)
 
         if problem.node_value(node) < bv:
             b = node
@@ -75,17 +75,16 @@ def branch_and_bound(problem, graph_search=True, depth_limit=float('inf')):
 
         if depth_limit == float('inf') or node.depth() < depth_limit:
             for s in problem.successors(node):
-                if not graph_search:
+                if not graph:
                     fringe.push(s)
                 elif s not in closed:
                     fringe.push(s)
                     closed.add(s)
 
-    yield b
+    yield SolutionNode(b, problem.goal)
 
 
-def hill_climbing(problem, random_restarts=0, max_sideways=0,
-                  graph_search=True):
+def hill_climbing(problem, random_restarts=0, max_sideways=0, graph=True):
     """
     Probably the simplest optimization approach. It expands the list of
     neighbors and chooses the best neighbor (steepest descent hill climbing).
@@ -95,10 +94,9 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
     maintain alternatives, so might use slightly less memory (just stores the
     best node instead of limited length priority queue).
 
-    If graph_search is true (the default), then a closed list is maintained.
-    This is imporant for search spaces with platues because it keeps the
-    algorithm from reexpanding neighbors with the same value and getting stuck
-    in a loop.
+    If graph is true (the default), then a closed list is maintained.  This is
+    imporant for search spaces with platues because it keeps the algorithm from
+    reexpanding neighbors with the same value and getting stuck in a loop.
 
     If random_restarts > 0, then search is restarted multiple times. This can
     be useful for getting out of local minimums.
@@ -115,17 +113,17 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
     :type random_restarts: int
     :param max_sideways: Specifies the max number of contiguous sideways moves.
     :type max_sideways: int
-    :param graph_search: Whether to use graph search (no duplicates) or tree
-        search (duplicates)
-    :type graph_search: Boolean
+    :param graph: Whether to use graph search (no duplicates) or tree search
+        (duplicates)
+    :type graph: Boolean
     """
     b = problem.initial
     bv = problem.node_value(b)
 
-    if problem.goal_test(b):
-        yield b
+    if problem.goal_test(b, problem.goal):
+        yield SolutionNode(b, problem.goal)
 
-    if graph_search:
+    if graph:
         closed = set()
         closed.add(problem.initial)
 
@@ -139,16 +137,16 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
             found_better = False
             prev_cost = cv
             for s in problem.successors(c):
-                if graph_search and s in closed:
+                if graph and s in closed:
                     continue
-                elif graph_search:
+                elif graph:
                     closed.add(s)
                 sv = problem.node_value(s)
                 if sv <= bv:
                     b = s
                     bv = sv
-                    if problem.goal_test(b):
-                        yield b
+                    if problem.goal_test(b, problem.goal):
+                        yield SolutionNode(b, problem.goal)
                 if sv <= cv:
                     c = s
                     cv = sv
@@ -161,23 +159,22 @@ def hill_climbing(problem, random_restarts=0, max_sideways=0,
         random_restarts -= 1
         if random_restarts >= 0:
             c = problem.random_node()
-            while graph_search and c in closed:
+            while graph and c in closed:
                 c = problem.random_node()
             cv = problem.node_value(c)
 
-            if graph_search:
+            if graph:
                 closed.add(c)
             if cv <= bv:
                 b = c
                 bv = cv
-                if problem.goal_test(b):
-                    yield b
+                if problem.goal_test(b, problem.goal):
+                    yield SolutionNode(b, problem.goal)
 
-    yield b
+    yield SolutionNode(b, problem.goal)
 
 
-def local_beam_search(problem, beam_width=1, max_sideways=0,
-                      graph_search=True):
+def local_beam_search(problem, beam_width=1, max_sideways=0, graph=True):
     """
     A variant of :func:`py_search.informed_search.beam_search` that can be
     applied to local search problems.  When the beam width of 1 this approach
@@ -193,21 +190,21 @@ def local_beam_search(problem, beam_width=1, max_sideways=0,
     :type beam_width: int
     :param max_sideways: Specifies the max number of contiguous sideways moves.
     :type max_sideways: int
-    :param graph_search: Whether to use graph search (no duplicates) or tree
+    :param graph: Whether to use graph search (no duplicates) or tree
         search (duplicates)
-    :type graph_search: Boolean
+    :type graph: Boolean
     """
     b = None
     bv = float('inf')
     sideways_moves = 0
 
-    fringe = PriorityQueue()
+    fringe = PriorityQueue(node_value=problem.node_value)
     fringe.push(problem.initial)
 
     while len(fringe) < beam_width:
         fringe.push(problem.random_node())
 
-    if graph_search:
+    if graph:
         closed = set()
         closed.add(problem.initial)
 
@@ -215,7 +212,7 @@ def local_beam_search(problem, beam_width=1, max_sideways=0,
         pv = fringe.peek_value()
 
         if bv < pv:
-            yield b
+            yield SolutionNode(b, problem.goal)
 
         if pv == bv:
             sideways_moves += 1
@@ -232,17 +229,17 @@ def local_beam_search(problem, beam_width=1, max_sideways=0,
         bv = pv
 
         for node in parents:
-            if problem.goal_test(node):
-                yield node
+            if problem.goal_test(node, problem.goal):
+                yield SolutionNode(node, problem.goal)
 
             for s in problem.successors(node):
-                if not graph_search:
+                if not graph:
                     fringe.push(s)
                 elif s not in closed:
                     fringe.push(s)
                     closed.add(s)
 
-    yield b
+    yield SolutionNode(b, problem.goal)
 
 
 def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
@@ -298,8 +295,8 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
     b = problem.initial
     bv = problem.node_value(b)
 
-    if problem.goal_test(b):
-        yield b
+    if problem.goal_test(b, problem.goal):
+        yield SolutionNode(b, problem.goal)
 
     c = b
     cv = bv
@@ -331,7 +328,7 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
                 frozen = 0
 
             if iterations >= limit:
-                yield b
+                yield SolutionNode(b, problem.goal)
 
             delta_e = sv - cv
             if T is None and delta_e > 0:
@@ -344,8 +341,8 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
                 c = s
                 cv = sv
 
-                if problem.goal_test(c):
-                    yield c
+                if problem.goal_test(c, problem.goal):
+                    yield SolutionNode(c, problem.goal)
 
         if T is None:
             if delta_count > 100:
@@ -360,4 +357,4 @@ def simulated_annealing(problem, temp_factor=0.95, temp_length=None,
              abs(changes) < min_change)):
             frozen += 1
 
-    yield b
+    yield SolutionNode(b, problem.goal)

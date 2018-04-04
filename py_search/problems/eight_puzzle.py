@@ -145,11 +145,12 @@ class EightPuzzleProblem(Problem):
         The function used to compute the value of a node.
         """
         if isinstance(node, GoalNode):
-            return (node.cost() + self.misplaced_tile_heuristic(self.initial.state,
-                                                                node.state))
+            return (node.cost() +
+                    self.misplaced_tile_heuristic(self.initial.state,
+                                                  node.state))
         else:
-            return (node.cost() + self.misplaced_tile_heuristic(node.state,
-                                                                self.goal.state))
+            return (node.cost() +
+                    self.misplaced_tile_heuristic(node.state, self.goal.state))
 
     def successors(self, node):
         """
@@ -200,10 +201,10 @@ if __name__ == "__main__":
         return iterative_sampling(problem, max_samples=100, depth_limit=10)
 
     def backward_bf_search(problem):
-        return best_first_search(problem, direction="backward")
+        return best_first_search(problem, forward=False, backward=True)
 
     def bidirectional_breadth_first_search(problem):
-        return breadth_first_search(problem, direction="both")
+        return breadth_first_search(problem, forward=True, backward=True)
 
     compare_searches(problems=[EightPuzzleProblem(initial, EightPuzzle())],
                      searches=[iterative_sampling_100_10,

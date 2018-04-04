@@ -14,52 +14,26 @@ from py_search.base import FIFOQueue
 from py_search.base import SolutionNode
 
 
-def tree_search(problem, fringe, depth_limit=float('inf')):
+def tree_search(problem, forward_fringe=None,
+                backward_fringe=None, depth_limit=float('inf')):
     """
-    Perform tree search (i.e., search where states might be duplicated) using
-    the given fringe class. Returns an iterators to the solutions, so more than
-    one solution can be found.
-
-    :param problem: The problem to solve.
-    :type problem: :class:`Problem`
-    :param fringe: The fringe class to use.
-    :type fringe: :class:`fringe`
-    :param depth_limit: A limit for the depth of the search tree. If set to
-        float('inf'), then depth is unlimited.
-    :type depth_limit: int or float('inf')
-    """
-    fringe.push(problem.initial)
-
-    while len(fringe) > 0:
-        node = fringe.pop()
-
-        if problem.goal_test(node, problem.goal):
-            yield node
-
-        elif depth_limit == float('inf') or node.depth() < depth_limit:
-            fringe.extend(problem.successors(node))
-
-
-def bidirectional_tree_search(problem, forward_fringe=None,
-                              backward_fringe=None, depth_limit=float('inf')):
-    """
-    A generalization of tree search that supports search in either, or both,
-    directions using the provided fringe classes. Returns an iterator to the
-    solutions, so more than one solution can be found.
+    A generalization of classic tree search that supports search in either, or
+    both, directions using the provided fringe classes. Returns an iterator to
+    the solutions, so more than one solution can be found.
 
     :param problem: The problem to solve.
     :type problem: :class:`Problem`
     :param forward_fringe: The fringe class to use in the forward direction.
     :type forward_fringe: :class:`fringe`
-    :param backward_fringe: The fringe class to use in the reverse direction.
+    :param backward_fringe: The fringe class to use in the backward direction.
     :type backward_fringe: :class:`fringe`
     :param depth_limit: A limit for the depth of the search tree from either
         direction. If set to float('inf'), then depth is unlimited.
     :type depth_limit: int or float('inf')
     """
     if (forward_fringe is None and backward_fringe is None):
-        raise Exception("Must provide a fringe class for forward, backward"
-                        "or both.")
+        raise ValueError("Must provide a fringe class for forward, backward"
+                         "or both.")
 
     if forward_fringe is None:
         ffringe = [problem.initial]
@@ -94,47 +68,16 @@ def bidirectional_tree_search(problem, forward_fringe=None,
                     bfringe.extend(problem.predecessors(goal))
 
 
-def graph_search(problem, fringe, depth_limit=float('inf')):
+def graph_search(problem, forward_fringe=None, backward_fringe=None,
+                 depth_limit=float('inf')):
     """
-    Perform graph search (i.e., no duplicate states) using the given fringe
-    class. Returns an iterator to the solutions, so more than one solution can
-    be found.
-
-    Note that the closed list will allow re-expansion of nodes with a lower
-    cost.
-
-    :param problem: The problem to solve.
-    :type problem: :class:`Problem`
-    :param fringe: The fringe class to use.
-    :type fringe: :class:`fringe`
-    :param depth_limit: A limit for the depth of the search tree. If set to
-        float('inf'), then depth is unlimited.
-    :type depth_limit: int or float('inf')
-    """
-    closed = {}
-    fringe.push(problem.initial)
-    closed[problem.initial] = problem.initial.cost()
-
-    while len(fringe) > 0:
-        node = fringe.pop()
-        if problem.goal_test(node, problem.goal):
-            yield node
-        elif depth_limit == float('inf') or node.depth() < depth_limit:
-            for s in problem.successors(node):
-                if s not in closed or s.cost() < closed[s]:
-                    fringe.push(s)
-                    closed[s] = s.cost()
-
-
-def bidirectional_graph_search(problem, forward_fringe=None,
-                               backward_fringe=None, depth_limit=float('inf')):
-    """
-    A uninformed technique that searchs simultaneously in both the forward and
-    backward directions.
+    A generalization of classical graph search that supports search in either,
+    or both, directions using the provided fringe classes. Returns an iterator
+    to the solutions, so more than one solution can be found.
     """
     if (forward_fringe is None and backward_fringe is None):
-        raise Exception("Must provide a fringe class for forward, backward"
-                        "or both.")
+        raise ValueError("Must provide a fringe class for forward, backward"
+                         "or both.")
 
     if forward_fringe is None:
         ffringe = [problem.initial]
@@ -181,60 +124,55 @@ def bidirectional_graph_search(problem, forward_fringe=None,
 
 
 def choose_search(problem, queue_class, depth_limit=float('inf'),
-                  search="graph", direction="forward"):
+                  graph=True, forward=True, backward=False):
     """
     Given the arguments, chooses the appropriate underlying classes
     to instantiate the search.
     """
-    if direction == "forward" and search == "tree":
-        return tree_search(problem, queue_class(), depth_limit)
-    elif direction == "forward" and search == "graph":
-        return graph_search(problem, queue_class(), depth_limit)
-    if direction == "backward":
-        forward_fringe = None
-        backward_fringe = queue_class()
-    elif direction == "both":
+    forward_fringe = None
+    backward_fringe = None
+
+    if forward:
         forward_fringe = queue_class()
+    if backward:
         backward_fringe = queue_class()
+
+    if graph:
+        return graph_search(problem, forward_fringe, backward_fringe,
+                            depth_limit)
     else:
-        raise Exception("Direction must be forward, backward, or both.")
-
-    if search == "tree":
-        search = bidirectional_tree_search
-    elif search == "graph":
-        search = bidirectional_graph_search
-    else:
-        raise Exception("Search must be tree or graph.")
-
-    return search(problem, forward_fringe=forward_fringe,
-                  backward_fringe=backward_fringe, depth_limit=depth_limit)
+        return tree_search(problem, forward_fringe, backward_fringe,
+                           depth_limit)
 
 
-def depth_first_search(problem, depth_limit=float('inf'), search="graph",
-                       direction="forward"):
+def depth_first_search(problem, depth_limit=float('inf'), graph=True,
+                       forward=True, backward=False):
     """
-    A simple implementation of depth-first search using a LIFO queue.
+    An implementation of depth-first search using a LIFO queue. This supports
+    bidirectional capabilities.
 
     :param problem: The problem to solve.
     :type problem: :class:`Problem`
-    :param search: A search algorithm to use (defaults to graph_search).
-    :type search: :func:`graph_search` or :func`tree_search`
     :param depth_limit: A limit for the depth of the search tree. If set to
         float('inf'), then depth is unlimited.
     :type depth_limit: int or float('inf')
+    :param graph_search: Whether to use graph search (default) or tree search.
+    :type graph_search: Boolean
+    :param forward_search: Whether to enable forward search (default) or not.
+    :type forward_search: Boolean
+    :param backward_search: Whether to enable backward search or not (default).
+    :type backward_search: Boolean
     """
     for solution in choose_search(problem, LIFOQueue, depth_limit=depth_limit,
-                                  search=search, direction=direction):
+                                  graph=graph, forward=forward,
+                                  backward=backward):
         yield solution
-
-    # for solution in search(problem, LIFOQueue(), depth_limit):
-    #     yield solution
 
 
 def breadth_first_search(problem, depth_limit=float('inf'),
-                         search="graph", direction="forward"):
+                         graph=True, forward=True, backward=False):
     """
-    A simple implementation of depth-first search using a FIFO queue.
+    A simple implementation of breadth-first search using a FIFO queue.
 
     :param problem: The problem to solve.
     :type problem: :class:`Problem`
@@ -245,16 +183,14 @@ def breadth_first_search(problem, depth_limit=float('inf'),
     :type depth_limit: int or float('inf')
     """
     for solution in choose_search(problem, FIFOQueue, depth_limit=depth_limit,
-                                  search=search, direction=direction):
+                                  graph=graph, forward=forward,
+                                  backward=backward):
         yield solution
-    # for solution in search(problem, FIFOQueue(), depth_limit):
-    #     yield solution
 
 
-def iterative_deepening_search(problem, search="graph",
-                               initial_depth_limit=0, depth_inc=1,
-                               max_depth_limit=float('inf'),
-                               direction="forward"):
+def iterative_deepening_search(problem, initial_depth_limit=0, depth_inc=1,
+                               max_depth_limit=float('inf'), graph=True,
+                               forward=True, backward=False):
     """
     An implementation of iterative deepening search. This search is basically
     depth-limited depth first up to the depth limit. If no solution is found at
@@ -263,8 +199,6 @@ def iterative_deepening_search(problem, search="graph",
 
     :param problem: The problem to solve.
     :type problem: :class:`Problem`
-    :param search: A search algorithm to use (defaults to graph_search).
-    :type search: :func:`graph_search` or :func`tree_search`
     :param initial_depth_limit: The initial depth limit for the search.
     :type initial_depth_limit: int or float('inf')
     :param depth_inc: The amount to increase the depth limit after failure.
@@ -272,11 +206,14 @@ def iterative_deepening_search(problem, search="graph",
     :param max_depth_limit: The maximum depth limit (default value of
         `float('inf')`)
     :type max_depth_limit: int or float('inf')
+    :param graph: Whether to use graph (default) search or tree search.
+    :type graph: Boolean
     """
     depth_limit = initial_depth_limit
     while depth_limit < max_depth_limit:
         for solution in depth_first_search(problem, depth_limit=depth_limit,
-                                           search=search, direction=direction):
+                                           graph=graph, forward=forward,
+                                           backward=backward):
             yield solution
         depth_limit += depth_inc
 
@@ -322,8 +259,10 @@ def iterative_sampling(problem, max_samples=float('inf'),
         curr = problem.initial
         while curr:
             if problem.goal_test(curr, problem.goal):
-                yield curr
+                yield SolutionNode(curr, problem.goal)
+                curr = False
             elif depth_limit == float('inf') or curr.depth() < depth_limit:
                 curr = problem.random_successor(curr)
             else:
                 curr = False
+        num_samples += 1
