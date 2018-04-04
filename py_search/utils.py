@@ -75,7 +75,10 @@ def timefun(f):
 
     @wraps(f)
     def wrapper(*args, **kwds):
-        result = timeit.Timer(partial(f, *args, **kwds)).autorange()
+        try:
+            result = timeit.Timer(partial(f, *args, **kwds)).autorange()
+        except Exception:
+            result = [10, timeit.Timer(partial(f, *args, **kwds)).timeit(10)]
         a = [a for a in args]
         a += ["%s=%s" % (k, kwds[k]) for k in kwds]
         print("Timing %s%s: %0.7f (num runs=%i)" % (f.__name__, tuple(a),
