@@ -1,7 +1,6 @@
 """
 Utilities for the py_search library.
 """
-
 from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
@@ -9,14 +8,18 @@ from __future__ import division
 
 from tabulate import tabulate
 from random import uniform
+from functools import wraps
+from functools import partial
 import timeit
+import numpy as np
 
 from py_search.base import AnnotatedProblem
 
 
 def weighted_choice(choices):
     """
-    Given a list of weighted choices, choose one.
+    Given a list of weighted choices, choose one.  Choices are a list of
+    (weight, element) pairs.
     """
     total = sum(w for w, c in choices)
     r = uniform(0, total)
@@ -25,7 +28,6 @@ def weighted_choice(choices):
         if upto + w >= r:
             return c
         upto += w
-    assert False, "Shouldn't get here"
 
 
 def compare_searches(problems, searches):
@@ -58,9 +60,27 @@ def compare_searches(problems, searches):
                           annotated_problem.nodes_evaluated, "%0.3f" % cost if
                           isinstance(cost, float) else cost,
                           "%0.4f" % elapsed if isinstance(elapsed, float) else
-                         elapsed])
+                          elapsed])
 
     print(tabulate(table, headers=['Problem', 'Search Alg', 'Goal Tests',
                                    'Nodes Expanded', 'Nodes Evaluated',
                                    'Solution Cost', 'Runtime'],
                    tablefmt="simple"))
+
+
+def timefun(f):
+    """
+    A decorator function for calling Timer with autorange on the provided
+    function.
+    """
+
+    @wraps(f)
+    def wrapper(*args, **kwds):
+        result = timeit.Timer(partial(f, *args, **kwds)).autorange()
+        a = [a for a in args]
+        a += ["%s=%s" % (k, kwds[k]) for k in kwds]
+        print("Timing %s%s: %0.7f (num runs=%i)" % (f.__name__, tuple(a),
+                                                    result[1], result[0]))
+        return f(*args, **kwds)
+
+    return wrapper
