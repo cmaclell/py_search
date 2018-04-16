@@ -1,16 +1,21 @@
 v0.1.0, 7/28/15 -- Initial release.
 v0.1.1, 7/28/15 -- Slight changes in names.
-v0.1.3, 7/30/15 -- Moved node_value function into problem and changed priorityqueue to priority set implemented using blist
+v0.1.3, 7/30/15 -- Moved node_value function into problem and changed
+priorityqueue to priority set implemented using blist
 v0.1.4, 7/30/15 -- Removed print statements
 v0.1.5, 7/30/15 -- Fixed bug in updating path
 v0.1.6, 7/31/15 -- Removed uuid because it is slow
 v0.1.7, 7/31/15 -- Fixed bug related to update path
 v0.1.8, 7/31/15 -- Reimplemented beam search to use breadth first expansion.
-v0.1.9, 8/1/15 -- Updated all of the docs and updated beam search to reexpand better duplicates
-v0.2.0, 8/1/15 -- Added local search optimization techniques and assignment problem example
-v1.0.0, 7/21/16 -- Refactored library into uninformed, informed, and optimization techniques and added tests.
+v0.1.9, 8/1/15 -- Updated all of the docs and updated beam search to reexpand
+better duplicates
+v0.2.0, 8/1/15 -- Added local search optimization techniques and assignment
+problem example
+v1.0.0, 7/21/16 -- Refactored library into uninformed, informed, and
+optimization techniques and added tests.
 v1.0.1, 7/22/16 -- Added N-Queens problem and example.
-v1.0.2, 7/25/16 -- Added random node to problem and random seeds to hill climbing and local beam search
+v1.0.2, 7/25/16 -- Added random node to problem and random seeds to hill
+climbing and local beam search
 v1.0.3, 7/29/16 -- Fixed some issues with the docs. Added random_node function
 to local assignment search.
 v1.0.4, 11/15/16 -- Improved simulatd annealing algorithm based on Johnson
@@ -28,3 +33,7 @@ which uses node_value as an optimistic estimate of all nodes reachable from the
 node.
 v1.2.0, 6/17/17 -- Dropped blist dependency to just use insort with a standard
 Python list.
+v2.0.0, 3/??/18 -- Forgot to update change log. Added regression and
+bidirectional search capabilities.
+v2.0.1, 4/16/18 -- Modified uninformed and informed so that goal nodes are not
+terminal in the case where search is continued after finding a goal.

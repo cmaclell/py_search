@@ -54,18 +54,16 @@ def tree_search(problem, forward_fringe=None,
             for goal in bfringe:
                 if problem.goal_test(state, goal):
                     yield SolutionNode(state, goal)
-            else:
-                if depth_limit == float('inf') or state.depth() < depth_limit:
-                    ffringe.extend(problem.successors(state))
+            if depth_limit == float('inf') or state.depth() < depth_limit:
+                ffringe.extend(problem.successors(state))
 
         if backward_fringe is not None:
             goal = bfringe.pop()
             for state in ffringe:
                 if problem.goal_test(state, goal):
                     yield SolutionNode(state, goal)
-            else:
-                if depth_limit == float('inf') or goal.depth() < depth_limit:
-                    bfringe.extend(problem.predecessors(goal))
+            if depth_limit == float('inf') or goal.depth() < depth_limit:
+                bfringe.extend(problem.predecessors(goal))
 
 
 def graph_search(problem, forward_fringe=None, backward_fringe=None,
@@ -102,12 +100,12 @@ def graph_search(problem, forward_fringe=None, backward_fringe=None,
             for goal in bfringe:
                 if problem.goal_test(state, goal):
                     yield SolutionNode(state, goal)
-            else:
-                if depth_limit == float('inf') or state.depth() < depth_limit:
-                    for s in problem.successors(state):
-                        if s not in fclosed or s.cost() < fclosed[s]:
-                            ffringe.push(s)
-                            fclosed[s] = s.cost()
+
+            if depth_limit == float('inf') or state.depth() < depth_limit:
+                for s in problem.successors(state):
+                    if s not in fclosed or s.cost() < fclosed[s]:
+                        ffringe.push(s)
+                        fclosed[s] = s.cost()
 
         if backward_fringe is not None:
             goal = bfringe.pop()
@@ -115,12 +113,11 @@ def graph_search(problem, forward_fringe=None, backward_fringe=None,
                 if problem.goal_test(state, goal):
                     yield SolutionNode(state, goal)
 
-            else:
-                if depth_limit == float('inf') or goal.depth() < depth_limit:
-                    for p in problem.predecessors(goal):
-                        if (p not in bclosed or p.cost() < bclosed[p]):
-                            bfringe.push(p)
-                            bclosed[p] = p.cost()
+            if depth_limit == float('inf') or goal.depth() < depth_limit:
+                for p in problem.predecessors(goal):
+                    if (p not in bclosed or p.cost() < bclosed[p]):
+                        bfringe.push(p)
+                        bclosed[p] = p.cost()
 
 
 def choose_search(problem, queue_class, depth_limit=float('inf'),
