@@ -1,3 +1,8 @@
+.. image:: https://travis-ci.com/cmaclell/py_search.svg?branch=master
+   :target: https://travis-ci.com/cmaclell/py_search
+.. image:: https://coveralls.io/repos/github/cmaclell/py_search/badge.svg?branch=master
+   :target: https://coveralls.io/github/cmaclell/py_search?branch=master
+
 =========
 Py Search
 =========
