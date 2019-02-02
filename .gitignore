@@ -8,6 +8,8 @@
 .coverage
 .tox
 .pytest_cache
+build
+htmlcov
 
 # ignore specific files
 .cache/
