@@ -5,6 +5,10 @@
 # ignore compiled python files
 *.pyc
 
+.coverage
+.tox
+.pytest_cache
+
 # ignore specific files
 .cache/
 dist/
