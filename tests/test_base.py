@@ -112,6 +112,16 @@ def test_fifo_queue():
     fifo.remove(1)
     assert len(fifo) == 0
 
+    fifo = FIFOQueue()
+    fifo.push(0)
+    fifo.push(1)
+    fifo.push(2)
+    assert list(fifo) == [0, 1, 2]
+
+    fifo.remove(2)
+    assert fifo.pop() == 0
+    assert fifo.pop() == 1
+
 
 def test_lifo_queue():
     """
@@ -134,6 +144,16 @@ def test_lifo_queue():
 
     random_elements.reverse()
     assert output == random_elements
+
+    lifo = LIFOQueue()
+    lifo.push(0)
+    lifo.push(1)
+    lifo.push(2)
+    assert list(lifo) == [2, 1, 0]
+
+    assert lifo.pop() == 2
+    assert lifo.pop() == 1
+    assert lifo.pop() == 0
 
 
 def test_priority_queue():
@@ -168,6 +188,27 @@ def test_priority_queue():
     while len(pq) > 0:
         output.append(pq.pop())
     assert output == random_elements[:6]
+
+    pq = PriorityQueue(node_value=lambda x: x, max_length=3)
+    pq.push(6)
+    pq.push(0)
+    pq.push(2)
+    pq.push(6)
+    pq.push(7)
+
+    assert len(pq) == 3
+    assert list(pq) == [0, 2, 6]
+
+    pq.update_cost_limit(5)
+
+    assert len(pq) == 2
+    assert pq.peek() == 0
+    assert pq.peek_value() == 0
+    assert pq.pop() == 0
+    assert pq.peek() == 2
+    assert pq.peek_value() == 2
+    assert pq.pop() == 2
+    assert len(pq) == 0
 
 
 def test_priority_queue_max_length():
