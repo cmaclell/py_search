@@ -8,7 +8,7 @@ Py Search
 =========
 
 This is a Python library of algorithms that implements various search
-algorithms written by Christopher MacLellan (http://www.christopia.net).
+algorithms written by Christopher MacLellan (https://chrismaclellan.com).
 In particular, there are uninformed, informed, and optimization techniques
 implemented with a standard interface.
 
