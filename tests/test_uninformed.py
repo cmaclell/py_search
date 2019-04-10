@@ -121,6 +121,21 @@ def test_depth_first_tree_search():
         assert p.nodes_expanded == goal*2
         assert p.goal_tests == goal+1
 
+    try:
+        p = EasyProblem(0, 10)
+        next(depth_first_search(p, graph=False, depth_limit=5))
+        assert False
+    except StopIteration:
+        pass
+
+    try:
+        p = EasyProblem(0, 10)
+        next(depth_first_search(p, graph=False, forward=False, backward=True,
+                                depth_limit=5))
+        assert False
+    except StopIteration:
+        pass
+
 
 def test_depth_first_graph_search():
     """
@@ -147,6 +162,21 @@ def test_depth_first_graph_search():
         except StopIteration:
             assert p2.nodes_expanded == 2
             assert p2.goal_tests == 1
+
+    try:
+        p = EasyProblem(0, 10)
+        next(depth_first_search(p, graph=True, depth_limit=5))
+        assert False
+    except StopIteration:
+        pass
+
+    try:
+        p = EasyProblem(0, 10)
+        next(depth_first_search(p, graph=True, forward=False, backward=True,
+                                depth_limit=5))
+        assert False
+    except StopIteration:
+        pass
 
 
 def test_breadth_first_tree_search():
@@ -201,6 +231,13 @@ def test_iterative_deepening_tree_search():
         assert (p.goal_tests == sum([pow(2, i+1)-2 for i in range(1, goal)]) +
                 (goal*2) + 1)
 
+    p = EasyProblem(0, 10)
+    try:
+        next(iterative_deepening_search(p, graph=False, max_depth_limit=5))
+        assert False
+    except StopIteration:
+        pass
+
 
 def test_iterative_deepening_graph_search():
     """
@@ -212,6 +249,13 @@ def test_iterative_deepening_graph_search():
         assert sol.state_node.state == goal
         assert p.nodes_expanded == sum([i*2 for i in range(1, goal+1)])
         assert p.goal_tests == sum([i+1 for i in range(1, goal+1)])+1
+
+    p = EasyProblem(0, 10)
+    try:
+        next(iterative_deepening_search(p, graph=True, max_depth_limit=5))
+        assert False
+    except StopIteration:
+        pass
 
 
 def test_iterative_sampling_search():

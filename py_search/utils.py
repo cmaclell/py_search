@@ -23,7 +23,7 @@ def weighted_choice(choices):
     total = sum(w for w, c in choices)
     r = uniform(0, total)
     upto = 0
-    for w, c in choices:
+    for w, c in choices:  # pragma: no branch
         if upto + w >= r:
             return c
         upto += w
