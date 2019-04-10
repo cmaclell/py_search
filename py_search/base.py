@@ -447,7 +447,7 @@ class PriorityQueue(Fringe):
     :type max_length: int or ``float('inf')``
     """
 
-    def __init__(self, node_value=lambda x: x.cost(), cost_limit=float('inf'),
+    def __init__(self, node_value=lambda x: x, cost_limit=float('inf'),
                  max_length=float('inf')):
         self.nodes = []
         self.max_length = max_length

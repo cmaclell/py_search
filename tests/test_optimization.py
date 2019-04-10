@@ -35,9 +35,9 @@ class PlateauProblem(Problem):
         yield node
 
         if v > 0:
-            yield Node(v - 1)
+            yield Node(v - 1, node)
         if v < 11:
-            yield Node(v + 1)
+            yield Node(v + 1, node)
 
     def random_successor(self, node):
         v = node.state
@@ -118,10 +118,14 @@ def test_hill_climbing():
     assert abs(sol.state_node.state - initial) <= 0.1
 
     p4 = AnnotatedProblem(PlateauProblem(initial))
-    sol = next(hill_climbing(p4, random_restarts=3))
+    sols = list(hill_climbing(p4, graph=False, random_restarts=2))
+    assert len(sols) == 1
+    sols = list(hill_climbing(p4, graph=True, random_restarts=2))
+    assert len(sols) == 1
 
     p5 = AnnotatedProblem(PlateauProblemWithGoal(initial))
-    sols = list(hill_climbing(p5, random_restarts=3))
+    sols = list(hill_climbing(p5, graph=False, random_restarts=2))
+    assert len(sols) > 0
 
     # assert sol.state == 0
     # initial = nQueens(5)
@@ -168,7 +172,7 @@ def test_simulated_annealing():
     limits = (-goal, goal)
     p = AnnotatedProblem(EasyProblem(initial, initial_cost=initial,
                                      extra=limits))
-    sol = next(simulated_annealing(p))
+    sol = next(simulated_annealing(p, temp_length=10, initial_temp=5))
     assert abs(sol.state_node.state - limits[0]) <= 0.1
 
     p2 = HillProblem(initial, goal=goal, initial_cost=initial, extra=limits)
@@ -182,9 +186,18 @@ def test_simulated_annealing():
     assert p3.goal_tests == 1
     assert abs(sol.state_node.state - initial) <= 0.1
 
-    p4 = HillProblem(initial, goal=goal, initial_cost=initial,
-                     extra=limits)
-    sol = next(simulated_annealing(p4, limit=2))
+    p4 = AnnotatedProblem(HillProblem(initial, goal=goal, initial_cost=initial,
+                                      extra=limits))
+    # sol = next(simulated_annealing(p4, limit=2))
+    sol = next(simulated_annealing(p4, temp_length=1, limit=2))
+    assert p4.nodes_expanded == 2
+
+    p5 = AnnotatedProblem(HillProblem(initial, goal=1000, initial_cost=initial,
+                                      extra=limits))
+    # sol = next(simulated_annealing(p4, limit=2))
+    sol = next(simulated_annealing(p5, temp_length=100, limit=900))
+    assert p5.nodes_expanded == 900
+
     # because of the tight limit, very very unlikely it will find the goal
     # assert abs(sol.state_node.state - initial) > 0.01
 
@@ -212,3 +225,13 @@ def test_branch_and_bound():
     assert p3.nodes_expanded == 0
     assert p3.goal_tests == 1
     assert abs(sol.state_node.state - initial) <= 0.1
+
+    p4 = PlateauProblem(0)
+    sol = list(branch_and_bound(p4))
+    assert len(sol) == 1
+    assert p4.node_value(sol[0].state_node) == -6
+
+    p5 = PlateauProblem(0)
+    sol = list(branch_and_bound(p5, depth_limit=1))
+    assert len(sol) == 1
+    assert p5.node_value(sol[0].state_node) == -5

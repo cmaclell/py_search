@@ -163,7 +163,7 @@ def test_priority_queue():
     random_elements = [i for i in range(10)]
     shuffle(random_elements)
 
-    pq = PriorityQueue(node_value=lambda x: x)
+    pq = PriorityQueue()
     for e in random_elements:
         pq.push(e)
 

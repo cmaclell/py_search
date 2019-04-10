@@ -58,6 +58,13 @@ def test_best_first_search_without_heuristic():
         assert p.nodes_expanded == pow(2, goal + 1) - 2
         assert p.goal_tests == pow(2, goal)
 
+    try:
+        p = EasyProblem(0, 10)
+        next(best_first_search(p, graph=False, cost_limit=5))
+        assert False
+    except StopIteration:
+        pass
+
 
 def test_best_first_search_with_heuristic():
     """
@@ -83,6 +90,14 @@ def test_iterative_best_first_tree_search():
         assert sol.state_node.state == goal
         assert p.nodes_expanded == goal*2
         assert p.goal_tests == goal+1
+
+    try:
+        p = HeuristicEasyProblem(0, 10)
+        next(iterative_deepening_best_first_search(p, graph=False,
+                                                   max_cost_limit=5))
+        assert False
+    except StopIteration:
+        pass
 
 
 def test_iterative_deepening_best_first_search():
@@ -151,3 +166,10 @@ def test_widening_beam_tree_search():
         p = AnnotatedProblem(HeuristicHardProblem(0, goal))
         sol = next(widening_beam_search(p, graph=True))
         assert sol.state_node.state == goal
+
+    try:
+        p = HeuristicHardProblem(0, 10)
+        next(widening_beam_search(p, max_beam_width=1))
+        assert False
+    except StopIteration:
+        pass
