@@ -7,11 +7,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
+from itertools import product
 
 from functools import partial
 
 from py_search.base import SolutionNode
 from py_search.base import PriorityQueue
+from py_search.base import NbsDataStructure
 from py_search.uninformed import choose_search
 
 
@@ -156,3 +158,83 @@ def widening_beam_search(problem, initial_beam_width=1,
                                     graph=graph):
             yield solution
         beam_width += 1
+
+
+def near_optimal_front_to_end_bidirectional_search_naive(problem):
+    node_value = problem.node_value
+    lower_bound = lambda pair: max(node_value(pair[0]), node_value(pair[1]), pair[0].cost() + pair[1].cost())
+    ffringe = []
+    bfringe = []
+    fclosed = {}
+    ffringe.append(problem.initial)
+    fclosed[problem.initial] = problem.initial.cost()
+
+    bclosed = {}
+    bfringe.append(problem.goal)
+    bclosed[problem.goal] = problem.goal.cost()
+
+    while len(ffringe) > 0 and len(bfringe) > 0:
+        pairs = list(product(ffringe, bfringe))
+        lbmin = lower_bound(min(pairs, key=lower_bound))
+        min_set = {pair for pair in pairs if lower_bound(pair=pair) == lbmin}
+        u_set = {u for (u, v) in min_set}
+        u_min = min(u_set, key=lambda n: n.cost())
+        v_set = {v for (u, v) in min_set if u is u_min}
+        v_min = min(v_set, key=lambda n: n.cost())
+
+        ffringe.remove(u_min)
+        for goal in bfringe:
+            if problem.goal_test(u_min, goal):
+                yield SolutionNode(u_min, goal)
+
+        for s in problem.successors(u_min):
+            if s not in fclosed or s.cost() < fclosed[s]:
+                ffringe.append(s)
+                fclosed[s] = s.cost()
+
+        bfringe.remove(v_min)
+        for state in ffringe:
+            if problem.goal_test(state, v_min):
+                yield SolutionNode(state, v_min)
+
+        for p in problem.predecessors(v_min):
+            if p not in bclosed or p.cost() < bclosed[p]:
+                bfringe.append(p)
+                bclosed[p] = p.cost()
+
+
+def near_optimal_front_to_end_bidirectional_search(problem):
+    node_value = problem.node_value
+    lower_bound = lambda pair: max(node_value(pair[0]), node_value(pair[1]), pair[0].cost() + pair[1].cost())
+    ffringe = NbsDataStructure(node_value_waiting=problem.node_value, node_value_ready=lambda n: n.cost())
+    bfringe = NbsDataStructure(node_value_waiting=problem.node_value, node_value_ready=lambda n: n.cost())
+    fclosed = {}
+    ffringe.push(problem.initial)
+    fclosed[problem.initial] = problem.initial.cost()
+
+    bclosed = {}
+    bfringe.push(problem.goal)
+    bclosed[problem.goal] = problem.goal.cost()
+
+    while len(ffringe) > 0 and len(bfringe) > 0:
+        ffringe.prepare_best(bfringe)
+
+        u_min = ffringe.pop()
+        for goal in bfringe:
+            if problem.goal_test(u_min, goal):
+                yield SolutionNode(u_min, goal)
+
+        for s in problem.successors(u_min):
+            if s not in fclosed or s.cost() < fclosed[s]:
+                ffringe.push(s)
+                fclosed[s] = s.cost()
+
+        v_min = bfringe.pop()
+        for state in ffringe:
+            if problem.goal_test(state, v_min):
+                yield SolutionNode(state, v_min)
+
+        for p in problem.predecessors(v_min):
+            if p not in bclosed or p.cost() < bclosed[p]:
+                bfringe.push(p)
+                bclosed[p] = p.cost()

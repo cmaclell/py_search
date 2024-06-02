@@ -14,6 +14,7 @@ from py_search.uninformed import iterative_sampling
 from py_search.informed import best_first_search
 from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import widening_beam_search
+from py_search.informed import near_optimal_front_to_end_bidirectional_search_naive
 from py_search.utils import compare_searches
 
 
@@ -215,4 +216,5 @@ if __name__ == "__main__":
                                best_first_search,
                                backward_bf_search,
                                iterative_deepening_best_first_search,
-                               widening_beam_search])
+                               widening_beam_search,
+                               near_optimal_front_to_end_bidirectional_search_naive])
