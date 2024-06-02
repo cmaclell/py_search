@@ -1,6 +1,6 @@
 from random import shuffle
 
-from py_search.base import FIFOQueue
+from py_search.base import FIFOQueue, NbsDataStructure
 from py_search.base import LIFOQueue
 from py_search.base import PriorityQueue
 from py_search.base import Fringe
@@ -48,7 +48,6 @@ def test_problem():
 
 
 def test_fringe():
-
     f = Fringe()
 
     try:
@@ -245,3 +244,61 @@ def test_priority_queue_cost_limit():
 
     random_elements.sort()
     assert output == random_elements[:4]
+
+
+def test_nbs_data_structure_push_pop():
+    """
+    Ensure that elements are added to the waiting queue and can be moved to the
+    ready queue and popped correctly.
+    """
+    random_elements = [i for i in range(10)]
+    shuffle(random_elements)
+
+    nbs = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
+
+    for e in random_elements:
+        nbs.push(e)
+
+    assert len(nbs) == 10
+
+    # Move all elements from waiting to ready
+    for _ in range(len(random_elements)):
+        nbs.move_from_waiting_to_ready()
+
+    assert len(nbs) == 10
+
+    # Elements should be in the same order as they were pushed since node_value is the same
+    output = [nbs.pop() for _ in range(len(nbs))]
+    assert output == sorted(random_elements)
+
+
+def test_nbs_data_structure_prepare_best():
+    """
+    Ensure that prepare_best correctly moves nodes between waiting and ready
+    queues and that the best nodes are found.
+    """
+    random_elements = [i for i in range(10)]
+    shuffle(random_elements)
+
+    nbs1 = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
+    nbs2 = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
+
+    for e in random_elements:
+        nbs1.push(e)
+        nbs2.push(e)
+
+    # Test prepare_best with two identical fringes
+    result = nbs1.prepare_best(nbs2)
+    assert result is True
+
+    # Test after prepare_best, both fringes should have moved elements to ready queues
+    assert len(nbs1.ready) > 0
+    assert len(nbs2.ready) > 0
+
+    # Ensure that elements are moved correctly to the ready queue
+    nbs1_elements = [nbs1.pop() for _ in range(len(nbs1.ready))]
+    nbs2_elements = [nbs2.pop() for _ in range(len(nbs2.ready))]
+
+    assert nbs1_elements == sorted(nbs1_elements)
+    assert nbs2_elements == sorted(nbs2_elements)
+    assert nbs1_elements == nbs2_elements

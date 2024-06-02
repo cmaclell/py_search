@@ -204,8 +204,14 @@ def near_optimal_front_to_end_bidirectional_search_naive(problem):
 
 
 def near_optimal_front_to_end_bidirectional_search(problem):
-    node_value = problem.node_value
-    lower_bound = lambda pair: max(node_value(pair[0]), node_value(pair[1]), pair[0].cost() + pair[1].cost())
+    """
+        Performs a near-optimal bidirectional search (NBS) from front to end, using a
+        heuristic node value to guide the search. Returns an iterator to the
+        solutions, allowing for multiple solutions to be found.
+
+        :param problem: The problem to solve.
+        :type problem: :class:`Problem`
+    """
     ffringe = NbsDataStructure(node_value_waiting=problem.node_value, node_value_ready=lambda n: n.cost())
     bfringe = NbsDataStructure(node_value_waiting=problem.node_value, node_value_ready=lambda n: n.cost())
     fclosed = {}

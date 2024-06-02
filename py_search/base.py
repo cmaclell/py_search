@@ -515,6 +515,39 @@ class PriorityQueue(Fringe):
 
 
 class NbsDataStructure(Fringe):
+    """
+    A data structure for Near-Optimal Bidirectional Search (NBS) that manages
+    nodes in two priority queues: one for nodes waiting to be explored and one
+    for nodes ready to be explored. Nodes in the 'waiting' queue are sorted by
+    their heuristic value, and nodes in the 'ready' queue are sorted by their
+    cost.
+
+    >>> nbs = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
+    >>> nbs.push(6)
+    >>> nbs.push(2)
+    >>> nbs.push(0)
+    >>> len(nbs)
+    3
+    >>> nbs.peek_waiting()
+    0
+    >>> nbs.move_from_waiting_to_ready()
+    >>> nbs.peek_ready()
+    0
+    >>> len(nbs)
+    3
+    >>> print(nbs.pop())
+    0
+    >>> len(nbs)
+    2
+    >>> nbs.prepare_best(nbs)
+    True
+
+    :param node_value_waiting: The node evaluation function for the waiting
+        queue.
+    :type node_value_waiting: a function with one parameter for node
+    :param node_value_ready: The node evaluation function for the ready queue.
+    :type node_value_ready: a function with one parameter for node
+    """
     def __init__(self, node_value_waiting, node_value_ready):
         self.c_lb = 0
         # Sorted low to high by the f values
