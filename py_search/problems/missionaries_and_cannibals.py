@@ -1,7 +1,7 @@
 from py_search.base import Problem, Node, GoalNode
-from py_search.informed import near_optimal_front_to_end_bidirectional_search_naive, widening_beam_search, \
-    iterative_deepening_best_first_search, best_first_search, near_optimal_front_to_end_bidirectional_search
-from py_search.uninformed import iterative_deepening_search, breadth_first_search, depth_first_search, \
+from py_search.informed import widening_beam_search, \
+    best_first_search, near_optimal_front_to_end_bidirectional_search
+from py_search.uninformed import breadth_first_search, depth_first_search, \
     iterative_sampling
 from py_search.utils import compare_searches
 
@@ -97,7 +97,7 @@ class MissionariesAndCannibals(Problem):
 
 
 if __name__ == "__main__":
-    puzzle = MissionariesAndCannibals(1000, 1000, 4)
+    puzzle = MissionariesAndCannibals(100, 100, 4)
     print("Puzzle being solved:")
     print(puzzle)
     print()

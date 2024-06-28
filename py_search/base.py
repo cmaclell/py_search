@@ -548,6 +548,7 @@ class NbsDataStructure(Fringe):
     :param node_value_ready: The node evaluation function for the ready queue.
     :type node_value_ready: a function with one parameter for node
     """
+
     def __init__(self, node_value_waiting, node_value_ready):
         self.c_lb = 0
         # Sorted low to high by the f values
@@ -561,7 +562,13 @@ class NbsDataStructure(Fringe):
     def pop(self):
         return self.ready.pop()
 
+    def peek(self):
+        return self.ready.peek()
+
     def peek_waiting(self):
+        return self.waiting.peek()
+
+    def peek_waiting_value(self):
         try:
             return self.waiting.peek_value()
         except IndexError:
@@ -578,10 +585,10 @@ class NbsDataStructure(Fringe):
         self.ready.push(node)
 
     def prepare_best(self, other_fringe):
-        while self.peek_waiting() < self.c_lb:
+        while self.peek_waiting_value() < self.c_lb:
             self.move_from_waiting_to_ready()
 
-        while other_fringe.peek_waiting() < other_fringe.c_lb:
+        while other_fringe.peek_waiting_value() < other_fringe.c_lb:
             other_fringe.move_from_waiting_to_ready()
 
         while True:
@@ -592,18 +599,20 @@ class NbsDataStructure(Fringe):
                 return True
 
             moved = False
-            if self.peek_waiting() <= self.c_lb:
+            if self.peek_waiting_value() <= self.c_lb:
                 self.move_from_waiting_to_ready()
                 moved = True
 
-            if other_fringe.peek_waiting() <= other_fringe.c_lb:
+            if other_fringe.peek_waiting_value() <= other_fringe.c_lb:
                 other_fringe.move_from_waiting_to_ready()
                 moved = True
 
             if not moved:
-                self.c_lb = other_fringe.c_lb = min(self.peek_waiting(),
-                                                    other_fringe.peek_waiting(),
+                self.c_lb = other_fringe.c_lb = min(self.peek_waiting_value(),
+                                                    other_fringe.peek_waiting_value(),
                                                     self.peek_ready() + other_fringe.peek_ready())
+                if self.c_lb == float("inf"):
+                    return False
 
     def __len__(self):
         return len(self.waiting) + len(self.ready)
@@ -614,3 +623,5 @@ class NbsDataStructure(Fringe):
         for node in self.waiting:
             yield node
 
+    def __str__(self) -> str:
+        return str([n for n in self])

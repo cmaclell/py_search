@@ -31,7 +31,7 @@ def tree_search(problem, forward_fringe=None,
         direction. If set to float('inf'), then depth is unlimited.
     :type depth_limit: int or float('inf')
     """
-    if (forward_fringe is None and backward_fringe is None):
+    if forward_fringe is None and backward_fringe is None:
         raise ValueError("Must provide a fringe class for forward, backward"
                          "or both.")
 
@@ -73,7 +73,7 @@ def graph_search(problem, forward_fringe=None, backward_fringe=None,
     or both, directions using the provided fringe classes. Returns an iterator
     to the solutions, so more than one solution can be found.
     """
-    if (forward_fringe is None and backward_fringe is None):
+    if forward_fringe is None and backward_fringe is None:
         raise ValueError("Must provide a fringe class for forward, backward"
                          "or both.")
 
@@ -115,7 +115,7 @@ def graph_search(problem, forward_fringe=None, backward_fringe=None,
 
             if depth_limit == float('inf') or goal.depth() < depth_limit:
                 for p in problem.predecessors(goal):
-                    if (p not in bclosed or p.cost() < bclosed[p]):
+                    if p not in bclosed or p.cost() < bclosed[p]:
                         bfringe.push(p)
                         bclosed[p] = p.cost()
 
