@@ -2,6 +2,20 @@ import networkx as nx
 from py_search.base import Problem, Node, GoalNode
 from py_search.informed import near_optimal_front_to_end_bidirectional_search
 import random
+from py_search.base import Problem
+from py_search.base import Node
+from py_search.base import GoalNode
+from py_search.uninformed import depth_first_search
+from py_search.uninformed import breadth_first_search
+from py_search.uninformed import iterative_deepening_search
+from py_search.uninformed import iterative_sampling
+from py_search.informed import best_first_search, near_optimal_front_to_end_bidirectional_search, \
+    near_optimal_front_to_end_bidirectional_search_threads
+from py_search.informed import iterative_deepening_best_first_search
+from py_search.informed import widening_beam_search
+from py_search.utils import compare_searches
+
+from py_search.utils import compare_searches
 
 
 class GraphProblem(Problem):
@@ -21,6 +35,7 @@ class GraphProblem(Problem):
     >>> print(sol.cost())
     8.0
     """
+
     def __init__(self, G, start_node, goal_node):
         super().__init__(int(start_node), int(goal_node))  # Ensure nodes are integers
         self.G = G
@@ -30,14 +45,14 @@ class GraphProblem(Problem):
     def shortest_path_heuristic(self, node, forward):
         node = int(node)  # Ensure node is of the correct type (integer)
         if forward:
-            return self.H_f[node]
+            return self.H_f.get(node, float("inf"))
         else:
-            return self.H_b[node]
+            return self.H_b.get(node, float("inf"))
 
     def node_value(self, node):
         if isinstance(node, GoalNode):
             return (node.cost() +
-                    self.shortest_path_heuristic(self.initial.state, forward=False))
+                    self.shortest_path_heuristic(node.state, forward=False))
         else:
             return (node.cost() +
                     self.shortest_path_heuristic(node.state, forward=True))
@@ -56,7 +71,8 @@ class GraphProblem(Problem):
             for neighbor in self.G.neighbors(node.state):
                 action = f"{node} -> {neighbor}"
                 path_cost = self.G[node.state][neighbor]["weight"]
-                successor_node = Node(int(neighbor), node, action, node.cost() + path_cost)  # Ensure neighbor is integer
+                successor_node = Node(int(neighbor), node, action,
+                                      node.cost() + path_cost)  # Ensure neighbor is integer
                 yield successor_node
         else:
             raise ValueError(f"Node {node} is not present in the graph.")
@@ -74,8 +90,62 @@ class GraphProblem(Problem):
             for neighbor in self.G.neighbors(goal_node.state):
                 action = f"{neighbor} -> {goal_node}"
                 path_cost = self.G[goal_node.state][neighbor]["weight"]
-                successor_node = GoalNode(int(neighbor), goal_node, action, goal_node.cost() + path_cost)  # Ensure neighbor is integer
+                successor_node = GoalNode(int(neighbor), goal_node, action,
+                                          goal_node.cost() + path_cost)  # Ensure neighbor is integer
                 yield successor_node
         else:
             raise ValueError(f"Node {goal_node} is not present in the graph.")
 
+
+if __name__ == "__main__":
+    num_nodes = 50000
+    edges = []
+    for i in range(num_nodes):
+        for j in range(i + 1, num_nodes):
+            if random.random() < (1 / 1000):
+                weight = float(int(random.uniform(10, 15)))
+                edges.append((i, j, weight))
+    G = nx.Graph()
+
+    for edge in edges:
+        G.add_edge(int(edge[0]), int(edge[1]), weight=edge[2])
+
+
+    def iterative_sampling_100_10(problem):
+        return iterative_sampling(problem, max_samples=100, depth_limit=10)
+
+
+    def backward_bf_search(problem):
+        return best_first_search(problem, forward=False, backward=True)
+
+
+    def bidirectional_breadth_first_search(problem):
+        return breadth_first_search(problem, forward=True, backward=True)
+
+
+    def bidirectional_best_first_search(problem):
+        return best_first_search(problem, forward=True, backward=True)
+
+
+    nodes = list(G.nodes)
+    graph = GraphProblem(G, nodes[0], nodes[-1])
+
+    sol = near_optimal_front_to_end_bidirectional_search(graph)
+    sol = next(sol)
+    print(sol.path())
+    print(sol.cost())
+    compare_searches(problems=[graph],
+                     searches=[
+                         # iterative_sampling_100_10,
+                         # depth_first_search,
+                         # breadth_first_search,
+                         # bidirectional_breadth_first_search,
+                         # iterative_deepening_search,
+                         best_first_search,
+                         backward_bf_search,
+                         # iterative_deepening_best_first_search,
+                         # widening_beam_search,
+                         bidirectional_best_first_search,
+                         near_optimal_front_to_end_bidirectional_search,
+                         near_optimal_front_to_end_bidirectional_search_threads,
+                     ])

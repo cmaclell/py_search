@@ -7,7 +7,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
-from itertools import product
+import threading
 
 from functools import partial
 
@@ -162,22 +162,24 @@ def widening_beam_search(problem, initial_beam_width=1,
 
 def near_optimal_front_to_end_bidirectional_search(problem):
     """
-        Performs a near-optimal bidirectional search (NBS) from front to end, using a
-        heuristic node value to guide the search. Returns an iterator to the
-        solutions, allowing for multiple solutions to be found.
+    Performs a near-optimal bidirectional search (NBS) from front to end, using a
+    heuristic node value to guide the search. Returns an iterator to the
+    solutions, allowing for multiple solutions to be found.
 
-        :param problem: The problem to solve.
-        :type problem: :class:`Problem`
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
     """
     c = float("inf")
     current_solution = None
-    ffringe = NbsDataStructure(node_value_waiting=problem.node_value, node_value_ready=lambda n: n.cost())
-    bfringe = NbsDataStructure(node_value_waiting=problem.node_value, node_value_ready=lambda n: n.cost())
+    F = problem.node_value
+    ffringe = NbsDataStructure(node_value_waiting=F, node_value_ready=lambda n: n.cost())
+    bfringe = NbsDataStructure(node_value_waiting=F, node_value_ready=lambda n: n.cost())
+
     fclosed = {}
+    bclosed = {}
+
     ffringe.push(problem.initial)
     fclosed[problem.initial] = problem.initial.cost()
-
-    bclosed = {}
 
     bfringe.push(problem.goal)
     bclosed[problem.goal] = problem.goal.cost()
@@ -185,35 +187,129 @@ def near_optimal_front_to_end_bidirectional_search(problem):
     while len(ffringe) > 0 and len(bfringe) > 0:
         succeed = ffringe.prepare_best(bfringe)
         if not succeed:
-            raise ValueError("Failed")
+            raise ValueError("Failed to prepare next node pair")
 
         u_min = ffringe.peek()
         v_min = bfringe.peek()
-        lower_bound = max(problem.node_value(u_min), problem.node_value(v_min), u_min.cost() + v_min.cost())
+        lower_bound = max(F(u_min), F(v_min), u_min.cost() + v_min.cost())
 
         if lower_bound >= c:
             yield current_solution
 
         u_min = ffringe.pop()
+        v_min = bfringe.pop()
 
         # Forward Expand
         for s in problem.successors(u_min):
             for goal in bfringe:
                 if problem.goal_test(u_min, goal):
-                    c = min(c, u_min.cost() + goal.cost())
-                    current_solution = SolutionNode(u_min, goal)
+                    if c > u_min.cost() + goal.cost():
+                        c = u_min.cost() + goal.cost()
+                        current_solution = SolutionNode(u_min, goal)
             if s not in fclosed or s.cost() < fclosed[s]:
                 ffringe.push(s)
                 fclosed[s] = s.cost()
-
-        v_min = bfringe.pop()
 
         # Backward Expand
         for p in problem.predecessors(v_min):
             for state in ffringe:
                 if problem.goal_test(state, v_min):
-                    c = min(c, v_min.cost() + state.cost())
-                    current_solution = SolutionNode(state, v_min)
+                    if c > v_min.cost() + state.cost():
+                        c = v_min.cost() + state.cost()
+                        current_solution = SolutionNode(state, v_min)
             if p not in bclosed or p.cost() < bclosed[p]:
                 bfringe.push(p)
                 bclosed[p] = p.cost()
+
+
+def near_optimal_front_to_end_bidirectional_search_threads(problem):
+    """
+    Performs a near-optimal bidirectional search (NBS) from front to end, using a
+    heuristic node value to guide the search. Returns an iterator to the
+    solutions, allowing for multiple solutions to be found.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    """
+    c = float("inf")
+    current_solution = None
+    F = problem.node_value
+    ffringe = NbsDataStructure(node_value_waiting=F, node_value_ready=lambda n: n.cost())
+    bfringe = NbsDataStructure(node_value_waiting=F, node_value_ready=lambda n: n.cost())
+
+    fclosed = {}
+    bclosed = {}
+
+    ffringe.push(problem.initial)
+    fclosed[problem.initial] = problem.initial.cost()
+
+    bfringe.push(problem.goal)
+    bclosed[problem.goal] = problem.goal.cost()
+
+    ffringe_lock = threading.Lock()
+    bfringe_lock = threading.Lock()
+    fclosed_lock = threading.Lock()
+    bclosed_lock = threading.Lock()
+    solution_lock = threading.Lock()
+
+    def forward_expand():
+        nonlocal c, current_solution
+        with ffringe_lock:
+            u_min = ffringe.pop()
+
+        for s in problem.successors(u_min):
+            with bfringe_lock:
+                for goal in bfringe:
+                    if problem.goal_test(u_min, goal):
+                        if c > u_min.cost() + goal.cost():
+                            c = u_min.cost() + goal.cost()
+                            with solution_lock:
+                                current_solution = SolutionNode(u_min, goal)
+
+            with fclosed_lock:
+                if s not in fclosed or s.cost() < fclosed[s]:
+                    with ffringe_lock:
+                        ffringe.push(s)
+                    fclosed[s] = s.cost()
+
+    def backward_expand():
+        nonlocal c, current_solution
+        with bfringe_lock:
+            v_min = bfringe.pop()
+
+        for p in problem.predecessors(v_min):
+            with ffringe_lock:
+                for state in ffringe:
+                    if problem.goal_test(state, v_min):
+                        if c > v_min.cost() + state.cost():
+                            c = v_min.cost() + state.cost()
+                            with solution_lock:
+                                current_solution = SolutionNode(state, v_min)
+
+            with bclosed_lock:
+                if p not in bclosed or p.cost() < bclosed[p]:
+                    with bfringe_lock:
+                        bfringe.push(p)
+                    bclosed[p] = p.cost()
+
+    while len(ffringe) > 0 and len(bfringe) > 0:
+        succeed = ffringe.prepare_best(bfringe)
+        if not succeed:
+            raise ValueError("Failed to prepare next node pair")
+
+        u_min = ffringe.peek()
+        v_min = bfringe.peek()
+
+        lower_bound = max(F(u_min), F(v_min), u_min.cost() + v_min.cost())
+
+        if lower_bound >= c:
+            yield current_solution
+
+        forward_thread = threading.Thread(target=forward_expand)
+        backward_thread = threading.Thread(target=backward_expand)
+
+        forward_thread.start()
+        backward_thread.start()
+
+        forward_thread.join()
+        backward_thread.join()

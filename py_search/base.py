@@ -16,6 +16,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
+import logging
 from collections import deque
 from random import choice
 from bisect import insort
@@ -513,6 +514,9 @@ class PriorityQueue(Fringe):
         for v, n in reversed(self.nodes):
             yield n
 
+    def __str__(self):
+        return str([n for n in self])
+
 
 class NbsDataStructure(Fringe):
     """
@@ -542,6 +546,55 @@ class NbsDataStructure(Fringe):
     >>> nbs.prepare_best(nbs)
     True
 
+    # Test for the article scenario
+    >>> costs = {
+    ...     "A": 8,
+    ...     "B": 6,
+    ...     "C": 3,
+    ...     "D": 8,
+    ...     "E": 6,
+    ...     "F": 3
+    ... }
+    >>> heuristic = {
+    ...     "A": 1,
+    ...     "B": 6,
+    ...     "C": 10,
+    ...     "D": 1,
+    ...     "E": 6,
+    ...     "F": 10
+    ... }
+    >>> H = lambda x: heuristic[x.state]
+    >>> C = lambda x: costs[x.state]
+    >>> F = lambda x: C(x) + H(x)
+    >>> front = NbsDataStructure(node_value_waiting=F, node_value_ready=C)
+    >>> back = NbsDataStructure(node_value_waiting=F, node_value_ready=C)
+    >>> nodes = [Node(chr(ord('A') + i)) for i in range(6)]
+    >>> front.push(nodes[0])
+    >>> front.push(nodes[1])
+    >>> front.push(nodes[2])
+    >>> back.push(nodes[3])
+    >>> back.push(nodes[4])
+    >>> back.push(nodes[5])
+    >>> front.prepare_best(back)
+    True
+    >>> print(front.pop())
+    State: B, Extra: None
+    >>> print(back.pop())
+    State: E, Extra: None
+    >>> front.prepare_best(back)
+    True
+    >>> print(front.pop())
+    State: C, Extra: None
+    >>> print(back.pop())
+    State: F, Extra: None
+    >>> front.prepare_best(back)
+    True
+    >>> print(front.pop())
+    State: A, Extra: None
+    >>> print(back.pop())
+    State: D, Extra: None
+
+
     :param node_value_waiting: The node evaluation function for the waiting
         queue.
     :type node_value_waiting: a function with one parameter for node
@@ -555,6 +608,7 @@ class NbsDataStructure(Fringe):
         self.waiting = PriorityQueue(node_value=node_value_waiting)
         # Sorted low to high by the cost values
         self.ready = PriorityQueue(node_value=node_value_ready)
+        self.logger = logging.getLogger(__name__)
 
     def push(self, node):
         self.waiting.push(node)
@@ -586,24 +640,35 @@ class NbsDataStructure(Fringe):
 
     def prepare_best(self, other_fringe):
         while self.peek_waiting_value() < self.c_lb:
+            self.logger.debug(f"Entered: {self.peek_waiting()} to the front-ready with value: {self.peek_waiting_value()}")
             self.move_from_waiting_to_ready()
 
         while other_fringe.peek_waiting_value() < other_fringe.c_lb:
+            self.logger.debug(f"Entered: {other_fringe.peek_waiting()} to the back-ready with value: {other_fringe.peek_waiting_value()}")
             other_fringe.move_from_waiting_to_ready()
 
         while True:
             if len(self) <= 0 or len(other_fringe) <= 0:
+                self.logger.warning("Empty Queue")
                 return False
 
             if self.peek_ready() + other_fringe.peek_ready() <= self.c_lb:
+                self.logger.debug("Ready State:")
+                self.logger.debug(f"C-lb: {self.c_lb}")
+                self.logger.debug(f"Length of front Open - Waiting: {len(self.waiting)}")
+                self.logger.debug(f"Length of front Open - Ready: {len(self.ready)}")
+                self.logger.debug(f"Length of back Open - Waiting: {len(other_fringe.waiting)}")
+                self.logger.debug(f"Length of back Open - Ready: {len(other_fringe.ready)}")
                 return True
 
             moved = False
             if self.peek_waiting_value() <= self.c_lb:
+                self.logger.debug(f"Action: Moving {self.peek_waiting()} from the front waiting to the ready")
                 self.move_from_waiting_to_ready()
                 moved = True
 
             if other_fringe.peek_waiting_value() <= other_fringe.c_lb:
+                self.logger.debug(f"Action: Moving {other_fringe.peek_waiting()} from the back waiting to the ready")
                 other_fringe.move_from_waiting_to_ready()
                 moved = True
 
@@ -611,7 +676,9 @@ class NbsDataStructure(Fringe):
                 self.c_lb = other_fringe.c_lb = min(self.peek_waiting_value(),
                                                     other_fringe.peek_waiting_value(),
                                                     self.peek_ready() + other_fringe.peek_ready())
+                self.logger.debug(f"Action: Raising C-lb to: {self.c_lb}")
                 if self.c_lb == float("inf"):
+                    self.logger.warning("Failed")
                     return False
 
     def __len__(self):
@@ -623,5 +690,5 @@ class NbsDataStructure(Fringe):
         for node in self.waiting:
             yield node
 
-    def __str__(self) -> str:
+    def __str__(self):
         return str([n for n in self])
