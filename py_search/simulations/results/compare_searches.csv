@@ -1,0 +1,76 @@
+graph_problem,object,solution depth,solution cost,solution path,nodes expanded,time
+600,bidirectional_breadth_first_search,3,38.0,"('State: 0, Extra: None -> 5', 'State: 5, Extra: None -> 59', '59 -> State: 391, Extra: None')",166,0.003755499999897438
+600,best_first_search,2,21.0,"('State: 0, Extra: None -> 228', 'State: 228, Extra: None -> 391')",1805,0.0108912000005148
+600,bidirectional_best_first_search,2,21.0,"('State: 0, Extra: None -> 228', '228 -> State: 391, Extra: None')",117,0.0006138999997347128
+600,near_optimal_front_to_end_bidirectional_search,2,21.0,"('State: 0, Extra: None -> 228', '228 -> State: 391, Extra: None')",1582,0.20436440000048606
+600,near_optimal_front_to_end_bidirectional_search_threads,2,21.0,"('State: 0, Extra: None -> 228', '228 -> State: 391, Extra: None')",1582,0.19130159999986063
+700,bidirectional_breadth_first_search,3,39.0,"('State: 0, Extra: None -> 23', 'State: 23, Extra: None -> 78', '78 -> State: 433, Extra: None')",636,0.0027012999998987652
+700,best_first_search,2,22.0,"('State: 0, Extra: None -> 269', 'State: 269, Extra: None -> 433')",4206,0.017378699999426317
+700,bidirectional_best_first_search,2,22.0,"('State: 0, Extra: None -> 269', '269 -> State: 433, Extra: None')",144,0.0007403999998132349
+700,near_optimal_front_to_end_bidirectional_search,2,22.0,"('State: 0, Extra: None -> 176', '176 -> State: 433, Extra: None')",3462,0.7724502999999459
+700,near_optimal_front_to_end_bidirectional_search_threads,2,22.0,"('State: 0, Extra: None -> 176', '176 -> State: 433, Extra: None')",3462,0.6988688000001275
+800,bidirectional_breadth_first_search,3,34.0,"('State: 0, Extra: None -> 17', 'State: 17, Extra: None -> 65', '65 -> State: 371, Extra: None')",514,0.002276700000038545
+800,best_first_search,2,23.0,"('State: 0, Extra: None -> 137', 'State: 137, Extra: None -> 371')",6198,0.025846000000456115
+800,bidirectional_best_first_search,2,23.0,"('State: 0, Extra: None -> 137', '137 -> State: 371, Extra: None')",146,0.0007480000003852183
+800,near_optimal_front_to_end_bidirectional_search,2,23.0,"('State: 0, Extra: None -> 137', '137 -> State: 371, Extra: None')",3646,0.8605796000001646
+800,near_optimal_front_to_end_bidirectional_search_threads,2,23.0,"('State: 0, Extra: None -> 137', '137 -> State: 371, Extra: None')",3646,0.8160763000005318
+900,bidirectional_breadth_first_search,3,36.0,"('State: 0, Extra: None -> 31', 'State: 31, Extra: None -> 65', '65 -> State: 229, Extra: None')",431,0.001784600000064529
+900,best_first_search,2,20.0,"('State: 0, Extra: None -> 654', 'State: 654, Extra: None -> 229')",3707,0.016937200000029407
+900,bidirectional_best_first_search,2,20.0,"('State: 0, Extra: None -> 654', '654 -> State: 229, Extra: None')",176,0.0008738000005905633
+900,near_optimal_front_to_end_bidirectional_search,2,20.0,"('State: 0, Extra: None -> 654', '654 -> State: 229, Extra: None')",2936,0.6699708000005558
+900,near_optimal_front_to_end_bidirectional_search_threads,2,20.0,"('State: 0, Extra: None -> 654', '654 -> State: 229, Extra: None')",2936,0.6303640000005544
+1000,bidirectional_breadth_first_search,3,37.0,"('State: 0, Extra: None -> 60', '60 -> State: 71, Extra: None', '71 -> State: 76, Extra: None')",987,0.003500299999359413
+1000,best_first_search,2,21.0,"('State: 0, Extra: None -> 910', 'State: 910, Extra: None -> 76')",7347,0.02953849999994418
+1000,bidirectional_best_first_search,2,21.0,"('State: 0, Extra: None -> 910', '910 -> State: 76, Extra: None')",217,0.0013114000003042747
+1000,near_optimal_front_to_end_bidirectional_search,2,21.0,"('State: 0, Extra: None -> 910', '910 -> State: 76, Extra: None')",5000,1.6308423000000403
+1000,near_optimal_front_to_end_bidirectional_search_threads,2,21.0,"('State: 0, Extra: None -> 910', '910 -> State: 76, Extra: None')",5000,1.5977914000004603
+1100,bidirectional_breadth_first_search,3,40.0,"('State: 0, Extra: None -> 13', '13 -> State: 55, Extra: None', '55 -> State: 1083, Extra: None')",713,0.00551409999934549
+1100,best_first_search,2,22.0,"('State: 0, Extra: None -> 1013', 'State: 1013, Extra: None -> 1083')",10419,0.04060930000014196
+1100,bidirectional_best_first_search,2,22.0,"('State: 0, Extra: None -> 1013', '1013 -> State: 1083, Extra: None')",238,0.001268799999706971
+1100,near_optimal_front_to_end_bidirectional_search,2,22.0,"('State: 0, Extra: None -> 378', '378 -> State: 1083, Extra: None')",6106,2.5319174999995084
+1100,near_optimal_front_to_end_bidirectional_search_threads,2,22.0,"('State: 0, Extra: None -> 378', '378 -> State: 1083, Extra: None')",6106,2.372722799999792
+1200,bidirectional_breadth_first_search,2,27.0,"('State: 0, Extra: None -> 60', '60 -> State: 847, Extra: None')",356,0.002673500000128115
+1200,best_first_search,2,22.0,"('State: 0, Extra: None -> 631', 'State: 631, Extra: None -> 847')",13946,0.0557582999999795
+1200,bidirectional_best_first_search,2,22.0,"('State: 0, Extra: None -> 631', '631 -> State: 847, Extra: None')",232,0.001152100000581413
+1200,near_optimal_front_to_end_bidirectional_search,2,22.0,"('State: 0, Extra: None -> 631', '631 -> State: 847, Extra: None')",5868,2.452450400000089
+1200,near_optimal_front_to_end_bidirectional_search_threads,2,22.0,"('State: 0, Extra: None -> 631', '631 -> State: 847, Extra: None')",5868,2.250535299999683
+1300,bidirectional_breadth_first_search,3,38.0,"('State: 0, Extra: None -> 28', 'State: 28, Extra: None -> 122', '122 -> State: 424, Extra: None')",911,0.0043866000005436945
+1300,best_first_search,2,21.0,"('State: 0, Extra: None -> 1242', 'State: 1242, Extra: None -> 424')",10654,0.04814410000017233
+1300,bidirectional_best_first_search,2,21.0,"('State: 0, Extra: None -> 1242', '1242 -> State: 424, Extra: None')",249,0.0012722000001303968
+1300,near_optimal_front_to_end_bidirectional_search,2,21.0,"('State: 0, Extra: None -> 1242', '1242 -> State: 424, Extra: None')",8431,4.921417999999903
+1300,near_optimal_front_to_end_bidirectional_search_threads,2,21.0,"('State: 0, Extra: None -> 1242', '1242 -> State: 424, Extra: None')",8431,4.163372299999537
+1400,bidirectional_breadth_first_search,2,27.0,"('State: 0, Extra: None -> 72', '72 -> State: 111, Extra: None')",428,0.005448500000056811
+1400,best_first_search,2,22.0,"('State: 0, Extra: None -> 159', 'State: 159, Extra: None -> 111')",17351,0.07536140000047453
+1400,bidirectional_best_first_search,2,22.0,"('State: 0, Extra: None -> 159', '159 -> State: 111, Extra: None')",290,0.005468800000016927
+1400,near_optimal_front_to_end_bidirectional_search,2,22.0,"('State: 0, Extra: None -> 461', '461 -> State: 111, Extra: None')",8027,4.312844000000041
+1400,near_optimal_front_to_end_bidirectional_search_threads,2,22.0,"('State: 0, Extra: None -> 461', '461 -> State: 111, Extra: None')",8027,4.409379900000204
+1500,bidirectional_breadth_first_search,3,37.0,"('State: 0, Extra: None -> 24', 'State: 24, Extra: None -> 64', '64 -> State: 810, Extra: None')",781,0.01161729999967065
+1500,best_first_search,2,20.0,"('State: 0, Extra: None -> 448', 'State: 448, Extra: None -> 810')",13823,0.23389549999956216
+1500,bidirectional_best_first_search,2,20.0,"('State: 0, Extra: None -> 448', '448 -> State: 810, Extra: None')",312,0.0018791000002238434
+1500,near_optimal_front_to_end_bidirectional_search,2,20.0,"('State: 0, Extra: None -> 448', '448 -> State: 810, Extra: None')",9084,5.448659300000145
+1500,near_optimal_front_to_end_bidirectional_search_threads,2,20.0,"('State: 0, Extra: None -> 448', '448 -> State: 810, Extra: None')",9084,5.042005600000266
+1600,bidirectional_breadth_first_search,3,41.0,"('State: 0, Extra: None -> 7', 'State: 7, Extra: None -> 86', '86 -> State: 1117, Extra: None')",1146,0.010499199999685516
+1600,best_first_search,2,22.0,"('State: 0, Extra: None -> 604', 'State: 604, Extra: None -> 1117')",23510,0.10151120000045921
+1600,bidirectional_best_first_search,2,22.0,"('State: 0, Extra: None -> 604', '604 -> State: 1117, Extra: None')",322,0.0025299999997514533
+1600,near_optimal_front_to_end_bidirectional_search,2,22.0,"('State: 0, Extra: None -> 604', '604 -> State: 1117, Extra: None')",13047,9.6713964999999
+1600,near_optimal_front_to_end_bidirectional_search_threads,2,22.0,"('State: 0, Extra: None -> 604', '604 -> State: 1117, Extra: None')",13047,9.080654299999878
+1700,bidirectional_breadth_first_search,3,37.0,"('State: 0, Extra: None -> 18', 'State: 18, Extra: None -> 95', '95 -> State: 891, Extra: None')",828,0.004354099999545724
+1700,best_first_search,2,21.0,"('State: 0, Extra: None -> 517', 'State: 517, Extra: None -> 891')",23455,0.10049630000048637
+1700,bidirectional_best_first_search,2,21.0,"('State: 0, Extra: None -> 517', '517 -> State: 891, Extra: None')",344,0.0028232000004209112
+1700,near_optimal_front_to_end_bidirectional_search,2,21.0,"('State: 0, Extra: None -> 110', '110 -> State: 891, Extra: None')",13607,10.823574300000473
+1700,near_optimal_front_to_end_bidirectional_search_threads,2,21.0,"('State: 0, Extra: None -> 110', '110 -> State: 891, Extra: None')",13607,10.252988499999447
+1800,bidirectional_breadth_first_search,2,21.0,"('State: 0, Extra: None -> 91', '91 -> State: 1150, Extra: None')",1293,0.004581800000778458
+1800,best_first_search,2,21.0,"('State: 0, Extra: None -> 91', 'State: 91, Extra: None -> 1150')",23512,0.0824257000003854
+1800,bidirectional_best_first_search,2,21.0,"('State: 0, Extra: None -> 91', '91 -> State: 1150, Extra: None')",379,0.0022084999991420773
+1800,near_optimal_front_to_end_bidirectional_search,2,21.0,"('State: 0, Extra: None -> 91', '91 -> State: 1150, Extra: None')",10550,7.342466899999636
+1800,near_optimal_front_to_end_bidirectional_search_threads,2,21.0,"('State: 0, Extra: None -> 91', '91 -> State: 1150, Extra: None')",10550,7.155195700000149
+1900,bidirectional_breadth_first_search,3,30.0,"('State: 0, Extra: None -> 9', 'State: 9, Extra: None -> 78', '78 -> State: 420, Extra: None')",986,0.0027559000000110245
+1900,best_first_search,2,21.0,"('State: 0, Extra: None -> 375', 'State: 375, Extra: None -> 420')",28410,0.10156220000044414
+1900,bidirectional_best_first_search,2,21.0,"('State: 0, Extra: None -> 375', '375 -> State: 420, Extra: None')",397,0.002153399999770045
+1900,near_optimal_front_to_end_bidirectional_search,2,21.0,"('State: 0, Extra: None -> 375', '375 -> State: 420, Extra: None')",17238,16.342877099999896
+1900,near_optimal_front_to_end_bidirectional_search_threads,2,21.0,"('State: 0, Extra: None -> 375', '375 -> State: 420, Extra: None')",17238,15.839799299999868
+2000,bidirectional_breadth_first_search,3,37.0,"('State: 0, Extra: None -> 8', 'State: 8, Extra: None -> 74', '74 -> State: 245, Extra: None')",1443,0.004698000000644242
+2000,best_first_search,2,21.0,"('State: 0, Extra: None -> 715', 'State: 715, Extra: None -> 245')",32268,0.11648310000055062
+2000,bidirectional_best_first_search,2,21.0,"('State: 0, Extra: None -> 715', '715 -> State: 245, Extra: None')",430,0.002169299999877694
+2000,near_optimal_front_to_end_bidirectional_search,2,21.0,"('State: 0, Extra: None -> 715', '715 -> State: 245, Extra: None')",17248,17.333483600000363
+2000,near_optimal_front_to_end_bidirectional_search_threads,2,21.0,"('State: 0, Extra: None -> 715', '715 -> State: 245, Extra: None')",17248,16.1829330999999

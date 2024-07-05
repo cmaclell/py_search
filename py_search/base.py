@@ -17,6 +17,7 @@ from __future__ import absolute_import
 from __future__ import division
 
 import logging
+import threading
 from collections import deque
 from random import choice
 from bisect import insort
@@ -96,13 +97,15 @@ class AnnotatedProblem(Problem):
         self.nodes_expanded = 0
         self.goal_tests = 0
         self.nodes_evaluated = 0
+        self.nodes_expanded_lock = threading.Lock()
 
     def random_successor(self, node):
         """
         A wrapper for the random_successor method that keeps track of the
         number of nodes expanded.
         """
-        self.nodes_expanded += 1
+        with self.nodes_expanded_lock:
+            self.nodes_expanded += 1
         return self.problem.random_successor(node)
 
     def random_node(self):
@@ -125,7 +128,8 @@ class AnnotatedProblem(Problem):
         nodes expanded.
         """
         for s in self.problem.predecessors(node):
-            self.nodes_expanded += 1
+            with self.nodes_expanded_lock:
+                self.nodes_expanded += 1
             yield s
 
     def successors(self, node):
@@ -134,7 +138,8 @@ class AnnotatedProblem(Problem):
         nodes expanded.
         """
         for s in self.problem.successors(node):
-            self.nodes_expanded += 1
+            with self.nodes_expanded_lock:
+                self.nodes_expanded += 1
             yield s
 
     def goal_test(self, state_node, goal_node=None):
@@ -527,24 +532,22 @@ class NbsDataStructure(Fringe):
     cost.
 
     >>> nbs = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
-    >>> nbs.push(6)
-    >>> nbs.push(2)
-    >>> nbs.push(0)
+    >>> nbs.push_front(6)
+    >>> nbs.push_front(2)
+    >>> nbs.push_front(0)
     >>> len(nbs)
-    3
-    >>> nbs.peek_waiting()
     0
-    >>> nbs.move_from_waiting_to_ready()
-    >>> nbs.peek_ready()
+    >>> nbs.peek_waiting_front()
     0
+    >>> nbs.move_from_waiting_to_ready_front()
     >>> len(nbs)
-    3
-    >>> print(nbs.pop())
+    0
+    >>> print(nbs.pop_front())
     0
     >>> len(nbs)
-    2
-    >>> nbs.prepare_best(nbs)
-    True
+    0
+    >>> nbs.prepare_best()
+    False
 
     # Test for the article scenario
     >>> costs = {
@@ -566,32 +569,31 @@ class NbsDataStructure(Fringe):
     >>> H = lambda x: heuristic[x.state]
     >>> C = lambda x: costs[x.state]
     >>> F = lambda x: C(x) + H(x)
-    >>> front = NbsDataStructure(node_value_waiting=F, node_value_ready=C)
-    >>> back = NbsDataStructure(node_value_waiting=F, node_value_ready=C)
+    >>> fringe = NbsDataStructure(node_value_waiting=F, node_value_ready=C)
     >>> nodes = [Node(chr(ord('A') + i)) for i in range(6)]
-    >>> front.push(nodes[0])
-    >>> front.push(nodes[1])
-    >>> front.push(nodes[2])
-    >>> back.push(nodes[3])
-    >>> back.push(nodes[4])
-    >>> back.push(nodes[5])
-    >>> front.prepare_best(back)
+    >>> fringe.push_front(nodes[0])
+    >>> fringe.push_front(nodes[1])
+    >>> fringe.push_front(nodes[2])
+    >>> fringe.push_back(nodes[3])
+    >>> fringe.push_back(nodes[4])
+    >>> fringe.push_back(nodes[5])
+    >>> fringe.prepare_best()
     True
-    >>> print(front.pop())
+    >>> print(fringe.pop_front())
     State: B, Extra: None
-    >>> print(back.pop())
+    >>> print(fringe.pop_back())
     State: E, Extra: None
-    >>> front.prepare_best(back)
+    >>> fringe.prepare_best()
     True
-    >>> print(front.pop())
+    >>> print(fringe.pop_front())
     State: C, Extra: None
-    >>> print(back.pop())
+    >>> print(fringe.pop_back())
     State: F, Extra: None
-    >>> front.prepare_best(back)
+    >>> fringe.prepare_best()
     True
-    >>> print(front.pop())
+    >>> print(fringe.pop_front())
     State: A, Extra: None
-    >>> print(back.pop())
+    >>> print(fringe.pop_back())
     State: D, Extra: None
 
 
@@ -604,91 +606,130 @@ class NbsDataStructure(Fringe):
 
     def __init__(self, node_value_waiting, node_value_ready):
         self.c_lb = 0
+
         # Sorted low to high by the f values
-        self.waiting = PriorityQueue(node_value=node_value_waiting)
+        self.waiting_front = PriorityQueue(node_value=node_value_waiting)
         # Sorted low to high by the cost values
-        self.ready = PriorityQueue(node_value=node_value_ready)
+        self.ready_front = PriorityQueue(node_value=node_value_ready)
+
+        # Sorted low to high by the f values
+        self.waiting_back = PriorityQueue(node_value=node_value_waiting)
+        # Sorted low to high by the cost values
+        self.ready_back = PriorityQueue(node_value=node_value_ready)
+
         self.logger = logging.getLogger(__name__)
 
-    def push(self, node):
-        self.waiting.push(node)
+    def push_front(self, initial):
+        self.waiting_front.push(initial)
 
-    def pop(self):
-        return self.ready.pop()
+    def push_back(self, goal):
+        self.waiting_back.push(goal)
 
-    def peek(self):
-        return self.ready.peek()
+    def pop_front(self):
+        return self.ready_front.pop()
 
-    def peek_waiting(self):
-        return self.waiting.peek()
+    def pop_back(self):
+        return self.ready_back.pop()
 
-    def peek_waiting_value(self):
+    def peek_waiting_front(self):
+        return self.waiting_front.peek()
+
+    def peek_waiting_value_front(self):
         try:
-            return self.waiting.peek_value()
+            return self.waiting_front.peek_value()
         except IndexError:
             return float("inf")
 
-    def peek_ready(self):
+    def peek_waiting_back(self):
+        return self.waiting_back.peek()
+
+    def peek_waiting_value_back(self):
         try:
-            return self.ready.peek_value()
+            return self.waiting_back.peek_value()
         except IndexError:
             return float("inf")
 
-    def move_from_waiting_to_ready(self):
-        node = self.waiting.pop()
-        self.ready.push(node)
+    def move_from_waiting_to_ready_front(self):
+        node = self.waiting_front.pop()
+        self.ready_front.push(node)
 
-    def prepare_best(self, other_fringe):
-        while self.peek_waiting_value() < self.c_lb:
-            self.logger.debug(f"Entered: {self.peek_waiting()} to the front-ready with value: {self.peek_waiting_value()}")
-            self.move_from_waiting_to_ready()
+    def peek_ready_pair(self):
+        return self.ready_front.peek(), self.ready_back.peek()
 
-        while other_fringe.peek_waiting_value() < other_fringe.c_lb:
-            self.logger.debug(f"Entered: {other_fringe.peek_waiting()} to the back-ready with value: {other_fringe.peek_waiting_value()}")
-            other_fringe.move_from_waiting_to_ready()
+    def peek_ready_pair_value(self):
+        try:
+            return self.ready_front.peek_value(), self.ready_back.peek_value()
+        except IndexError:
+            return float("inf"), float("inf")
+
+    def move_from_waiting_to_ready_back(self):
+        node = self.waiting_back.pop()
+        self.ready_back.push(node)
+
+    def prepare_best(self):
+        while self.peek_waiting_value_front() < self.c_lb:
+            self.logger.debug(
+                f"Entered: {self.peek_waiting_front()} to the front-ready with value: {self.peek_waiting_value_front()}")
+            self.move_from_waiting_to_ready_front()
+
+        while self.peek_waiting_value_back() < self.c_lb:
+            self.logger.debug(
+                f"Entered: {self.peek_waiting_back()} to the back-ready with value: {self.peek_waiting_value_back()}")
+            self.move_from_waiting_to_ready_back()
 
         while True:
-            if len(self) <= 0 or len(other_fringe) <= 0:
+            if len(self) <= 0:
                 self.logger.warning("Empty Queue")
                 return False
 
-            if self.peek_ready() + other_fringe.peek_ready() <= self.c_lb:
+            u, v = self.peek_ready_pair_value()
+            if u + v <= self.c_lb:
                 self.logger.debug("Ready State:")
                 self.logger.debug(f"C-lb: {self.c_lb}")
-                self.logger.debug(f"Length of front Open - Waiting: {len(self.waiting)}")
-                self.logger.debug(f"Length of front Open - Ready: {len(self.ready)}")
-                self.logger.debug(f"Length of back Open - Waiting: {len(other_fringe.waiting)}")
-                self.logger.debug(f"Length of back Open - Ready: {len(other_fringe.ready)}")
+                self.logger.debug(f"Length of front Open - Waiting: {len(self.waiting_front)}")
+                self.logger.debug(f"Length of front Open - Ready: {len(self.ready_front)}")
+                self.logger.debug(f"Length of back Open - Waiting: {len(self.waiting_back)}")
+                self.logger.debug(f"Length of back Open - Ready: {len(self.ready_back)}")
                 return True
 
             moved = False
-            if self.peek_waiting_value() <= self.c_lb:
-                self.logger.debug(f"Action: Moving {self.peek_waiting()} from the front waiting to the ready")
-                self.move_from_waiting_to_ready()
+            if self.peek_waiting_value_front() <= self.c_lb:
+                self.logger.debug(f"Action: Moving {self.peek_waiting_front()} from the front waiting to the ready")
+                self.move_from_waiting_to_ready_front()
                 moved = True
 
-            if other_fringe.peek_waiting_value() <= other_fringe.c_lb:
-                self.logger.debug(f"Action: Moving {other_fringe.peek_waiting()} from the back waiting to the ready")
-                other_fringe.move_from_waiting_to_ready()
+            if self.peek_waiting_value_back() <= self.c_lb:
+                self.logger.debug(f"Action: Moving {self.peek_waiting_back()} from the back waiting to the ready")
+                self.move_from_waiting_to_ready_back()
                 moved = True
 
             if not moved:
-                self.c_lb = other_fringe.c_lb = min(self.peek_waiting_value(),
-                                                    other_fringe.peek_waiting_value(),
-                                                    self.peek_ready() + other_fringe.peek_ready())
+                u, v = self.peek_ready_pair_value()
+                self.c_lb = min(
+                    self.peek_waiting_value_front(),
+                    self.peek_waiting_value_back(),
+                    u + v
+                )
                 self.logger.debug(f"Action: Raising C-lb to: {self.c_lb}")
                 if self.c_lb == float("inf"):
                     self.logger.warning("Failed")
                     return False
 
     def __len__(self):
-        return len(self.waiting) + len(self.ready)
-
-    def __iter__(self):
-        for node in self.ready:
-            yield node
-        for node in self.waiting:
-            yield node
+        return min(len(self.waiting_front) + len(self.ready_front), len(self.waiting_back) + len(self.ready_back))
 
     def __str__(self):
         return str([n for n in self])
+
+    def back(self):
+        for node in self.ready_back:
+            yield node
+        for node in self.waiting_back:
+            yield node
+
+    def front(self):
+        for node in self.ready_front:
+            yield node
+        for node in self.waiting_front:
+            yield node
+

@@ -6,15 +6,20 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
+import random
 from math import pow
+
+import networkx as nx
 
 from py_search.base import Node
 from py_search.base import Problem
 from py_search.base import AnnotatedProblem
-from py_search.informed import best_first_search
+from py_search.informed import best_first_search, near_optimal_front_to_end_bidirectional_search, \
+    near_optimal_front_to_end_bidirectional_search_threads
 from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import beam_search
 from py_search.informed import widening_beam_search
+from py_search.problems.graph import GraphProblem
 
 
 class EasyProblem(Problem):
@@ -173,3 +178,36 @@ def test_widening_beam_tree_search():
         assert False
     except StopIteration:
         pass
+
+
+def create_graph_problem(num_nodes):
+    edges = []
+    for i in range(num_nodes):
+        for j in range(i + 1, num_nodes):
+            if random.random() < (1 / 10):
+                weight = float(int(random.uniform(10, 15)))
+                edges.append((i, j, weight))
+    G = nx.Graph()
+
+    for edge in edges:
+        G.add_edge(int(edge[0]), int(edge[1]), weight=edge[2])
+
+    nodes = list(G.nodes)
+    graph = GraphProblem(G, nodes[0], nodes[-1])
+    return graph
+
+
+def test_near_optimal_front_to_end_bidirectional_search():
+    for x in range(50, 100, 2):
+        g = create_graph_problem(x)
+        shortest_path = next(best_first_search(g)).cost()
+        sol = next(near_optimal_front_to_end_bidirectional_search(g))
+        assert sol.cost() == shortest_path
+
+
+def test_near_optimal_front_to_end_bidirectional_search_threads():
+    for x in range(50, 100, 2):
+        g = create_graph_problem(x)
+        shortest_path = next(best_first_search(g)).cost()
+        sol = next(near_optimal_front_to_end_bidirectional_search_threads(g))
+        assert sol.cost() == shortest_path

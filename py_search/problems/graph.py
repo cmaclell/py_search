@@ -1,3 +1,4 @@
+import experiments_csv
 import networkx as nx
 from py_search.base import Problem, Node, GoalNode
 from py_search.informed import near_optimal_front_to_end_bidirectional_search
@@ -13,9 +14,27 @@ from py_search.informed import best_first_search, near_optimal_front_to_end_bidi
     near_optimal_front_to_end_bidirectional_search_threads
 from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import widening_beam_search
+from py_search.utils import compare_searches, AnnotatedSearch
 from py_search.utils import compare_searches
 
-from py_search.utils import compare_searches
+
+def rank_dict_by_values(input_dict):
+    # Sort the dictionary by its values
+    sorted_items = sorted(input_dict.items(), key=lambda item: item[1])
+
+    # Initialize variables
+    rank = 0
+    last_value = None
+    rank_dict = {}
+
+    # Assign ranks
+    for idx, (key, value) in enumerate(sorted_items):
+        rank_dict[key] = rank
+        if value != last_value:
+            rank += 1
+        last_value = value
+
+    return rank_dict
 
 
 class GraphProblem(Problem):
@@ -39,11 +58,15 @@ class GraphProblem(Problem):
     def __init__(self, G, start_node, goal_node):
         super().__init__(int(start_node), int(goal_node))  # Ensure nodes are integers
         self.G = G
-        self.H_f = nx.single_source_dijkstra_path_length(G, int(goal_node), weight='weight')
-        self.H_b = nx.single_source_dijkstra_path_length(G, int(start_node), weight='weight')
+        single_src_dijkstra_forward = nx.single_source_dijkstra_path_length(self.G, int(goal_node),
+                                                                            weight='weight')
+        self.H_f = rank_dict_by_values(single_src_dijkstra_forward)
+        single_src_dijkstra_backward = nx.single_source_dijkstra_path_length(self.G, int(start_node),
+                                                                             weight='weight')
+        self.H_b = rank_dict_by_values(single_src_dijkstra_backward)
 
     def shortest_path_heuristic(self, node, forward):
-        node = int(node)  # Ensure node is of the correct type (integer)
+        node = int(node)
         if forward:
             return self.H_f.get(node, float("inf"))
         else:
@@ -98,11 +121,11 @@ class GraphProblem(Problem):
 
 
 if __name__ == "__main__":
-    num_nodes = 50000
+    num_nodes = 1000
     edges = []
     for i in range(num_nodes):
         for j in range(i + 1, num_nodes):
-            if random.random() < (1 / 1000):
+            if random.random() < (1 / 10):
                 weight = float(int(random.uniform(10, 15)))
                 edges.append((i, j, weight))
     G = nx.Graph()

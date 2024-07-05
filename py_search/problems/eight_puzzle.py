@@ -69,6 +69,8 @@ class EightPuzzle:
         for i in range(num_shuffles):
             self.executeAction(choice([a for a in self.legalActions()]))
 
+        return self
+
     def executeAction(self, action):
         """
         Executes an action to the EightPuzzle object.
