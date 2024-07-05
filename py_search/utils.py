@@ -11,6 +11,7 @@ from random import uniform
 from functools import wraps
 from functools import partial
 import timeit
+
 from py_search.base import AnnotatedProblem
 
 
@@ -107,4 +108,3 @@ class AnnotatedSearch:
             cost = 'Failed'
             sol = 'Failed'
         return sol, cost, annotated_problem.nodes_expanded, elapsed
-

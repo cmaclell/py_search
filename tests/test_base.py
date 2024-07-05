@@ -48,6 +48,7 @@ def test_problem():
 
 
 def test_fringe():
+
     f = Fringe()
 
     try:

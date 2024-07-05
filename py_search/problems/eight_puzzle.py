@@ -2,8 +2,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
-
-import logging
 from random import choice
 
 from py_search.base import Problem
@@ -13,8 +11,7 @@ from py_search.uninformed import depth_first_search
 from py_search.uninformed import breadth_first_search
 from py_search.uninformed import iterative_deepening_search
 from py_search.uninformed import iterative_sampling
-from py_search.informed import best_first_search, near_optimal_front_to_end_bidirectional_search, \
-    near_optimal_front_to_end_bidirectional_search_threads
+from py_search.informed import best_first_search, near_optimal_front_to_end_bidirectional_search
 from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import widening_beam_search
 from py_search.utils import compare_searches
@@ -207,6 +204,7 @@ class NoHeuristic(EightPuzzleProblem):
 
 
 if __name__ == "__main__":
+
     puzzle = EightPuzzle()
     puzzle.randomize(10)
 
