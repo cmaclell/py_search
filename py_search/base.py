@@ -16,8 +16,6 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from __future__ import division
 
-import logging
-import threading
 from collections import deque
 from random import choice
 from bisect import insort
@@ -97,15 +95,13 @@ class AnnotatedProblem(Problem):
         self.nodes_expanded = 0
         self.goal_tests = 0
         self.nodes_evaluated = 0
-        self.nodes_expanded_lock = threading.Lock()
 
     def random_successor(self, node):
         """
         A wrapper for the random_successor method that keeps track of the
         number of nodes expanded.
         """
-        with self.nodes_expanded_lock:
-            self.nodes_expanded += 1
+        self.nodes_expanded += 1
         return self.problem.random_successor(node)
 
     def random_node(self):
@@ -128,8 +124,7 @@ class AnnotatedProblem(Problem):
         nodes expanded.
         """
         for s in self.problem.predecessors(node):
-            with self.nodes_expanded_lock:
-                self.nodes_expanded += 1
+            self.nodes_expanded += 1
             yield s
 
     def successors(self, node):
@@ -138,8 +133,7 @@ class AnnotatedProblem(Problem):
         nodes expanded.
         """
         for s in self.problem.successors(node):
-            with self.nodes_expanded_lock:
-                self.nodes_expanded += 1
+            self.nodes_expanded += 1
             yield s
 
     def goal_test(self, state_node, goal_node=None):
@@ -519,17 +513,14 @@ class PriorityQueue(Fringe):
         for v, n in reversed(self.nodes):
             yield n
 
-    def __str__(self):
-        return str([n for n in self])
-
 
 class NbsDataStructure(Fringe):
     """
     A data structure for Near-Optimal Bidirectional Search (NBS) that manages
-    nodes in two priority queues: one for nodes waiting to be explored and one
-    for nodes ready to be explored. Nodes in the 'waiting' queue are sorted by
-    their heuristic value, and nodes in the 'ready' queue are sorted by their
-    cost.
+    nodes in two priority queues for each direction: one for nodes waiting to
+    be explored and one for nodes ready to be explored. Nodes in the 'waiting'
+    queue are sorted by their heuristic value, and nodes in the 'ready' queue
+    are sorted by their cost.
 
     >>> nbs = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
     >>> nbs.push_front(6)
@@ -617,8 +608,6 @@ class NbsDataStructure(Fringe):
         # Sorted low to high by the cost values
         self.ready_back = PriorityQueue(node_value=node_value_ready)
 
-        self.logger = logging.getLogger(__name__)
-
     def push_front(self, initial):
         self.waiting_front.push(initial)
 
@@ -668,38 +657,25 @@ class NbsDataStructure(Fringe):
 
     def prepare_best(self):
         while self.peek_waiting_value_front() < self.c_lb:
-            self.logger.debug(
-                f"Entered: {self.peek_waiting_front()} to the front-ready with value: {self.peek_waiting_value_front()}")
             self.move_from_waiting_to_ready_front()
 
         while self.peek_waiting_value_back() < self.c_lb:
-            self.logger.debug(
-                f"Entered: {self.peek_waiting_back()} to the back-ready with value: {self.peek_waiting_value_back()}")
             self.move_from_waiting_to_ready_back()
 
         while True:
             if len(self) <= 0:
-                self.logger.warning("Empty Queue")
                 return False
 
             u, v = self.peek_ready_pair_value()
             if u + v <= self.c_lb:
-                self.logger.debug("Ready State:")
-                self.logger.debug(f"C-lb: {self.c_lb}")
-                self.logger.debug(f"Length of front Open - Waiting: {len(self.waiting_front)}")
-                self.logger.debug(f"Length of front Open - Ready: {len(self.ready_front)}")
-                self.logger.debug(f"Length of back Open - Waiting: {len(self.waiting_back)}")
-                self.logger.debug(f"Length of back Open - Ready: {len(self.ready_back)}")
                 return True
 
             moved = False
             if self.peek_waiting_value_front() <= self.c_lb:
-                self.logger.debug(f"Action: Moving {self.peek_waiting_front()} from the front waiting to the ready")
                 self.move_from_waiting_to_ready_front()
                 moved = True
 
             if self.peek_waiting_value_back() <= self.c_lb:
-                self.logger.debug(f"Action: Moving {self.peek_waiting_back()} from the back waiting to the ready")
                 self.move_from_waiting_to_ready_back()
                 moved = True
 
@@ -710,9 +686,7 @@ class NbsDataStructure(Fringe):
                     self.peek_waiting_value_back(),
                     u + v
                 )
-                self.logger.debug(f"Action: Raising C-lb to: {self.c_lb}")
                 if self.c_lb == float("inf"):
-                    self.logger.warning("Failed")
                     return False
 
     def __len__(self):
@@ -732,4 +706,3 @@ class NbsDataStructure(Fringe):
             yield node
         for node in self.waiting_front:
             yield node
-
