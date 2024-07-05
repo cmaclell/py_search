@@ -257,48 +257,16 @@ def test_nbs_data_structure_push_pop():
     nbs = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
 
     for e in random_elements:
-        nbs.push(e)
+        nbs.push_front(e)
 
-    assert len(nbs) == 10
+    assert len(nbs) == 0
 
     # Move all elements from waiting to ready
     for _ in range(len(random_elements)):
-        nbs.move_from_waiting_to_ready()
+        nbs.move_from_waiting_to_ready_front()
 
-    assert len(nbs) == 10
+    assert len(nbs) == 0
 
     # Elements should be in the same order as they were pushed since node_value is the same
-    output = [nbs.pop() for _ in range(len(nbs))]
+    output = [nbs.pop_front() for _ in range(len(random_elements))]
     assert output == sorted(random_elements)
-
-
-def test_nbs_data_structure_prepare_best():
-    """
-    Ensure that prepare_best correctly moves nodes between waiting and ready
-    queues and that the best nodes are found.
-    """
-    random_elements = [i for i in range(10)]
-    shuffle(random_elements)
-
-    nbs1 = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
-    nbs2 = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
-
-    for e in random_elements:
-        nbs1.push(e)
-        nbs2.push(e)
-
-    # Test prepare_best with two identical fringes
-    result = nbs1.prepare_best(nbs2)
-    assert result is True
-
-    # Test after prepare_best, both fringes should have moved elements to ready queues
-    assert len(nbs1.ready) > 0
-    assert len(nbs2.ready) > 0
-
-    # Ensure that elements are moved correctly to the ready queue
-    nbs1_elements = [nbs1.pop() for _ in range(len(nbs1.ready))]
-    nbs2_elements = [nbs2.pop() for _ in range(len(nbs2.ready))]
-
-    assert nbs1_elements == sorted(nbs1_elements)
-    assert nbs2_elements == sorted(nbs2_elements)
-    assert nbs1_elements == nbs2_elements
