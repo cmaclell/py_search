@@ -208,7 +208,7 @@ class NoHeuristic(EightPuzzleProblem):
 
 if __name__ == "__main__":
     puzzle = EightPuzzle()
-    puzzle.randomize(100)
+    puzzle.randomize(10)
 
     initial = puzzle
     print("Puzzle being solved:")
@@ -228,23 +228,14 @@ if __name__ == "__main__":
         return best_first_search(problem, forward=True, backward=True)
 
 
-    # compare_searches(problems=[EightPuzzleProblem(initial, EightPuzzle())],
-    #                  searches=[iterative_sampling_100_10,
-    #                            depth_first_search,
-    #                            breadth_first_search,
-    #                            bidirectional_breadth_first_search,
-    #                            iterative_deepening_search,
-    #                            best_first_search,
-    #                            backward_bf_search,
-    #                            iterative_deepening_best_first_search,
-    #                            widening_beam_search,
-    #                            near_optimal_front_to_end_bidirectional_search
-    #                            ])
     compare_searches(problems=[EightPuzzleProblem(initial, EightPuzzle())],
-                     searches=[
-                         bidirectional_breadth_first_search,
-                         best_first_search,
-                         bidirectional_best_first_search,
-                         near_optimal_front_to_end_bidirectional_search,
-                         near_optimal_front_to_end_bidirectional_search_threads,
-                     ])
+                     searches=[iterative_sampling_100_10,
+                               depth_first_search,
+                               breadth_first_search,
+                               bidirectional_breadth_first_search,
+                               iterative_deepening_search,
+                               best_first_search,
+                               backward_bf_search,
+                               iterative_deepening_best_first_search,
+                               widening_beam_search,
+                               near_optimal_front_to_end_bidirectional_search,])

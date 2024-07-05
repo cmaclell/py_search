@@ -14,8 +14,7 @@ import networkx as nx
 from py_search.base import Node
 from py_search.base import Problem
 from py_search.base import AnnotatedProblem
-from py_search.informed import best_first_search, near_optimal_front_to_end_bidirectional_search, \
-    near_optimal_front_to_end_bidirectional_search_threads
+from py_search.informed import best_first_search, near_optimal_front_to_end_bidirectional_search
 from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import beam_search
 from py_search.informed import widening_beam_search
@@ -202,12 +201,4 @@ def test_near_optimal_front_to_end_bidirectional_search():
         g = create_graph_problem(x)
         shortest_path = next(best_first_search(g)).cost()
         sol = next(near_optimal_front_to_end_bidirectional_search(g))
-        assert sol.cost() == shortest_path
-
-
-def test_near_optimal_front_to_end_bidirectional_search_threads():
-    for x in range(50, 100, 2):
-        g = create_graph_problem(x)
-        shortest_path = next(best_first_search(g)).cost()
-        sol = next(near_optimal_front_to_end_bidirectional_search_threads(g))
         assert sol.cost() == shortest_path
