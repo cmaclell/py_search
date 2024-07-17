@@ -11,7 +11,7 @@ from py_search.uninformed import depth_first_search
 from py_search.uninformed import breadth_first_search
 from py_search.uninformed import iterative_deepening_search
 from py_search.uninformed import iterative_sampling
-from py_search.informed import best_first_search
+from py_search.informed import best_first_search, near_optimal_front_to_end_bidirectional_search
 from py_search.informed import iterative_deepening_best_first_search
 from py_search.informed import widening_beam_search
 from py_search.utils import compare_searches
@@ -65,6 +65,8 @@ class EightPuzzle:
 
         for i in range(num_shuffles):
             self.executeAction(choice([a for a in self.legalActions()]))
+
+        return self
 
     def executeAction(self, action):
         """
@@ -140,17 +142,31 @@ class EightPuzzleProblem(Problem):
                 h += 1
         return h
 
+    def manhattan_distance_heuristic(self, state, goal):
+        """
+        The manhattan distance heuristic
+        """
+        h = 0
+        for i, v in enumerate(state.state):
+            if v != 0:
+                current_pos = i
+                goal_pos = goal.state.index(v)
+                current_row, current_col = divmod(current_pos, 3)
+                goal_row, goal_col = divmod(goal_pos, 3)
+                h += abs(current_row - goal_row) + abs(current_col - goal_col)
+        return h
+
     def node_value(self, node):
         """
         The function used to compute the value of a node.
         """
         if isinstance(node, GoalNode):
             return (node.cost() +
-                    self.misplaced_tile_heuristic(self.initial.state,
+                    self.manhattan_distance_heuristic(self.initial.state,
                                                   node.state))
         else:
             return (node.cost() +
-                    self.misplaced_tile_heuristic(node.state, self.goal.state))
+                    self.manhattan_distance_heuristic(node.state, self.goal.state))
 
     def successors(self, node):
         """
@@ -206,6 +222,10 @@ if __name__ == "__main__":
     def bidirectional_breadth_first_search(problem):
         return breadth_first_search(problem, forward=True, backward=True)
 
+    def bidirectional_best_first_search(problem):
+        return best_first_search(problem, forward=True, backward=True)
+
+
     compare_searches(problems=[EightPuzzleProblem(initial, EightPuzzle())],
                      searches=[iterative_sampling_100_10,
                                depth_first_search,
@@ -215,4 +235,5 @@ if __name__ == "__main__":
                                best_first_search,
                                backward_bf_search,
                                iterative_deepening_best_first_search,
-                               widening_beam_search])
+                               widening_beam_search,
+                               near_optimal_front_to_end_bidirectional_search,])

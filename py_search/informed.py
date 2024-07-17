@@ -12,6 +12,7 @@ from functools import partial
 
 from py_search.base import SolutionNode
 from py_search.base import PriorityQueue
+from py_search.base import NbsDataStructure
 from py_search.uninformed import choose_search
 
 
@@ -156,3 +157,64 @@ def widening_beam_search(problem, initial_beam_width=1,
                                     graph=graph):
             yield solution
         beam_width += 1
+
+
+def near_optimal_front_to_end_bidirectional_search(problem):
+    """
+    Performs a near-optimal bidirectional search (NBS) from front to end, using a
+    heuristic node value to guide the search. Returns an iterator to the
+    solutions, allowing for multiple solutions to be found.
+
+    :param problem: The problem to solve.
+    :type problem: :class:`Problem`
+    """
+    c = float("inf")
+    current_solution = None
+    F = problem.node_value
+    fringe = NbsDataStructure(node_value_waiting=F, node_value_ready=lambda n: n.cost())
+
+    fclosed = {}
+    bclosed = {}
+
+    fringe.push_front(problem.initial)
+    fclosed[problem.initial] = problem.initial.cost()
+
+    fringe.push_back(problem.goal)
+    bclosed[problem.goal] = problem.goal.cost()
+
+    while len(fringe) > 0:
+        succeed = fringe.prepare_best()
+        if not succeed:
+            raise ValueError("Failed to prepare next node pair")
+
+        u_min, v_min = fringe.peek_ready_pair()
+        lower_bound = max(F(u_min), F(v_min), u_min.cost() + v_min.cost())
+
+        if lower_bound >= c:
+            yield current_solution
+
+        # Forward Expand
+        u_min = fringe.pop_front()
+        for s in problem.successors(u_min):
+            for goal in fringe.back():
+                if problem.goal_test(u_min, goal):
+                    if c > u_min.cost() + goal.cost():
+                        c = u_min.cost() + goal.cost()
+                        current_solution = SolutionNode(u_min, goal)
+            if s not in fclosed or s.cost() < fclosed[s]:
+                fringe.push_front(s)
+                fclosed[s] = s.cost()
+
+        # Backward Expand
+        v_min = fringe.pop_back()
+        for p in problem.predecessors(v_min):
+            for state in fringe.front():
+                if problem.goal_test(state, v_min):
+                    if c > v_min.cost() + state.cost():
+                        c = v_min.cost() + state.cost()
+                        current_solution = SolutionNode(state, v_min)
+            if p not in bclosed or p.cost() < bclosed[p]:
+                fringe.push_back(p)
+                bclosed[p] = p.cost()
+
+    yield current_solution

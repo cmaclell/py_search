@@ -512,3 +512,197 @@ class PriorityQueue(Fringe):
     def __iter__(self):
         for v, n in reversed(self.nodes):
             yield n
+
+
+class NbsDataStructure(Fringe):
+    """
+    A data structure for Near-Optimal Bidirectional Search (NBS) that manages
+    nodes in two priority queues for each direction: one for nodes waiting to
+    be explored and one for nodes ready to be explored. Nodes in the 'waiting'
+    queue are sorted by their heuristic value, and nodes in the 'ready' queue
+    are sorted by their cost.
+
+    >>> nbs = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
+    >>> nbs.push_front(6)
+    >>> nbs.push_front(2)
+    >>> nbs.push_front(0)
+    >>> len(nbs)
+    0
+    >>> nbs.peek_waiting_front()
+    0
+    >>> nbs.move_from_waiting_to_ready_front()
+    >>> len(nbs)
+    0
+    >>> print(nbs.pop_front())
+    0
+    >>> len(nbs)
+    0
+    >>> nbs.prepare_best()
+    False
+
+    # Test for the article scenario
+    >>> costs = {
+    ...     "A": 8,
+    ...     "B": 6,
+    ...     "C": 3,
+    ...     "D": 8,
+    ...     "E": 6,
+    ...     "F": 3
+    ... }
+    >>> heuristic = {
+    ...     "A": 1,
+    ...     "B": 6,
+    ...     "C": 10,
+    ...     "D": 1,
+    ...     "E": 6,
+    ...     "F": 10
+    ... }
+    >>> H = lambda x: heuristic[x.state]
+    >>> C = lambda x: costs[x.state]
+    >>> F = lambda x: C(x) + H(x)
+    >>> fringe = NbsDataStructure(node_value_waiting=F, node_value_ready=C)
+    >>> nodes = [Node(chr(ord('A') + i)) for i in range(6)]
+    >>> fringe.push_front(nodes[0])
+    >>> fringe.push_front(nodes[1])
+    >>> fringe.push_front(nodes[2])
+    >>> fringe.push_back(nodes[3])
+    >>> fringe.push_back(nodes[4])
+    >>> fringe.push_back(nodes[5])
+    >>> fringe.prepare_best()
+    True
+    >>> print(fringe.pop_front())
+    State: B, Extra: None
+    >>> print(fringe.pop_back())
+    State: E, Extra: None
+    >>> fringe.prepare_best()
+    True
+    >>> print(fringe.pop_front())
+    State: C, Extra: None
+    >>> print(fringe.pop_back())
+    State: F, Extra: None
+    >>> fringe.prepare_best()
+    True
+    >>> print(fringe.pop_front())
+    State: A, Extra: None
+    >>> print(fringe.pop_back())
+    State: D, Extra: None
+
+
+    :param node_value_waiting: The node evaluation function for the waiting
+        queue.
+    :type node_value_waiting: a function with one parameter for node
+    :param node_value_ready: The node evaluation function for the ready queue.
+    :type node_value_ready: a function with one parameter for node
+    """
+
+    def __init__(self, node_value_waiting, node_value_ready):
+        self.c_lb = 0
+
+        # Sorted low to high by the f values
+        self.waiting_front = PriorityQueue(node_value=node_value_waiting)
+        # Sorted low to high by the cost values
+        self.ready_front = PriorityQueue(node_value=node_value_ready)
+
+        # Sorted low to high by the f values
+        self.waiting_back = PriorityQueue(node_value=node_value_waiting)
+        # Sorted low to high by the cost values
+        self.ready_back = PriorityQueue(node_value=node_value_ready)
+
+    def push_front(self, initial):
+        self.waiting_front.push(initial)
+
+    def push_back(self, goal):
+        self.waiting_back.push(goal)
+
+    def pop_front(self):
+        return self.ready_front.pop()
+
+    def pop_back(self):
+        return self.ready_back.pop()
+
+    def peek_waiting_front(self):
+        return self.waiting_front.peek()
+
+    def peek_waiting_value_front(self):
+        try:
+            return self.waiting_front.peek_value()
+        except IndexError:
+            return float("inf")
+
+    def peek_waiting_back(self):
+        return self.waiting_back.peek()
+
+    def peek_waiting_value_back(self):
+        try:
+            return self.waiting_back.peek_value()
+        except IndexError:
+            return float("inf")
+
+    def move_from_waiting_to_ready_front(self):
+        node = self.waiting_front.pop()
+        self.ready_front.push(node)
+
+    def peek_ready_pair(self):
+        return self.ready_front.peek(), self.ready_back.peek()
+
+    def peek_ready_pair_value(self):
+        try:
+            return self.ready_front.peek_value(), self.ready_back.peek_value()
+        except IndexError:
+            return float("inf"), float("inf")
+
+    def move_from_waiting_to_ready_back(self):
+        node = self.waiting_back.pop()
+        self.ready_back.push(node)
+
+    def prepare_best(self):
+        while self.peek_waiting_value_front() < self.c_lb:
+            self.move_from_waiting_to_ready_front()
+
+        while self.peek_waiting_value_back() < self.c_lb:
+            self.move_from_waiting_to_ready_back()
+
+        while True:
+            if len(self) <= 0:
+                return False
+
+            u, v = self.peek_ready_pair_value()
+            if u + v <= self.c_lb:
+                return True
+
+            moved = False
+            if self.peek_waiting_value_front() <= self.c_lb:
+                self.move_from_waiting_to_ready_front()
+                moved = True
+
+            if self.peek_waiting_value_back() <= self.c_lb:
+                self.move_from_waiting_to_ready_back()
+                moved = True
+
+            if not moved:
+                u, v = self.peek_ready_pair_value()
+                self.c_lb = min(
+                    self.peek_waiting_value_front(),
+                    self.peek_waiting_value_back(),
+                    u + v
+                )
+                if self.c_lb == float("inf"):
+                    return False
+
+    def __len__(self):
+        return min(len(self.waiting_front) + len(self.ready_front), len(self.waiting_back) + len(self.ready_back))
+
+    def __str__(self):
+        return str([n for n in self])
+
+    def back(self):
+        for node in self.ready_back:
+            yield node
+        for node in self.waiting_back:
+            yield node
+
+    def front(self):
+        for node in self.ready_front:
+            yield node
+        for node in self.waiting_front:
+            yield node

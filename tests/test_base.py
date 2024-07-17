@@ -1,6 +1,6 @@
 from random import shuffle
 
-from py_search.base import FIFOQueue
+from py_search.base import FIFOQueue, NbsDataStructure
 from py_search.base import LIFOQueue
 from py_search.base import PriorityQueue
 from py_search.base import Fringe
@@ -245,3 +245,29 @@ def test_priority_queue_cost_limit():
 
     random_elements.sort()
     assert output == random_elements[:4]
+
+
+def test_nbs_data_structure_push_pop():
+    """
+    Ensure that elements are added to the waiting queue and can be moved to the
+    ready queue and popped correctly.
+    """
+    random_elements = [i for i in range(10)]
+    shuffle(random_elements)
+
+    nbs = NbsDataStructure(node_value_waiting=lambda x: x, node_value_ready=lambda x: x)
+
+    for e in random_elements:
+        nbs.push_front(e)
+
+    assert len(nbs) == 0
+
+    # Move all elements from waiting to ready
+    for _ in range(len(random_elements)):
+        nbs.move_from_waiting_to_ready_front()
+
+    assert len(nbs) == 0
+
+    # Elements should be in the same order as they were pushed since node_value is the same
+    output = [nbs.pop_front() for _ in range(len(random_elements))]
+    assert output == sorted(random_elements)

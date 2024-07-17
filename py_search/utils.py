@@ -86,3 +86,25 @@ def timefun(f):
         return f(*args, **kwds)
 
     return wrapper
+
+
+class AnnotatedSearch:
+    def __init__(self, search):
+        self.search = search
+
+    def __str__(self):
+        return f"{self.search.__name__}"
+
+    def run(self, problem):
+        annotated_problem = AnnotatedProblem(problem)
+        start_time = timeit.default_timer()
+
+        try:
+            sol = next(self.search(annotated_problem))
+            elapsed = timeit.default_timer() - start_time
+            cost = sol.cost()
+        except StopIteration:
+            elapsed = timeit.default_timer() - start_time
+            cost = 'Failed'
+            sol = 'Failed'
+        return sol, cost, annotated_problem.nodes_expanded, elapsed
