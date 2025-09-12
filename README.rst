@@ -27,4 +27,4 @@ Important Links
 ===============
 
 - Source code: `<https://github.com/cmaclell/py_search>`_
-- Documentation: `<http://py_search.readthedocs.org>`_
+- Documentation: `<http://py-search.readthedocs.org>`_
